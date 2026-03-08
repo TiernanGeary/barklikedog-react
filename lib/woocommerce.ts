@@ -64,7 +64,7 @@ export function addToCartUrl(
     quantity?: number
   } = {}
 ): string {
-  const base = WP_URL
+  const base = `${WP_URL}/cart`
   const params = new URLSearchParams({ 'add-to-cart': String(product.id) })
   if (options.variationId) params.set('variation_id', String(options.variationId))
   if (options.quantity)    params.set('quantity', String(options.quantity))
