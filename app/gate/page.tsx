@@ -7,7 +7,16 @@ export default function GatePage() {
 
       {/* Video background */}
       <div className="gate-video-wrap">
-        <video autoPlay loop muted playsInline>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          disablePictureInPicture
+          controlsList="nodownload nofullscreen noremoteplayback"
+          onContextMenu={(e) => e.preventDefault()}
+          style={{ pointerEvents: 'none' }}
+        >
           <source src="/gate-video.mp4" type="video/mp4" />
         </video>
       </div>
