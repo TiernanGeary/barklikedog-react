@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getProduct, getVariations } from '@/lib/woocommerce'
+import { getProduct } from '@/lib/sanity'
 import ProductDetail from '@/components/ProductDetail'
 
 interface Props {
@@ -11,13 +11,9 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProduct(slug).catch(() => null)
   if (!product) notFound()
 
-  const variations = product.type === 'variable'
-    ? await getVariations(product.id).catch(() => [])
-    : []
-
   return (
     <div className="page-content">
-      <ProductDetail product={product} variations={variations} />
+      <ProductDetail product={product} />
     </div>
   )
 }

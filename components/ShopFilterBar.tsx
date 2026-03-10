@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import type { WCCategory } from '@/lib/types'
+import type { Category } from '@/lib/types'
 
 interface Props {
-  categories: WCCategory[]
+  categories: Category[]
   activeSlug?: string
 }
 
@@ -17,9 +17,9 @@ export default function ShopFilterBar({ categories, activeSlug }: Props) {
       </Link>
       {categories.map(cat => (
         <Link
-          key={cat.id}
-          href={`/shop?category=${cat.slug}`}
-          className={`shop-filter-btn${activeSlug === cat.slug ? ' is-active' : ''}`}
+          key={cat._id}
+          href={`/shop?category=${cat.slug.current}`}
+          className={`shop-filter-btn${activeSlug === cat.slug.current ? ' is-active' : ''}`}
         >
           {cat.name}
         </Link>

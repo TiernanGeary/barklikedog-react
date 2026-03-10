@@ -1,8 +1,8 @@
-import type { WCProduct } from '@/lib/types'
+import type { Product } from '@/lib/types'
 import ProductCard from './ProductCard'
 
 interface Props {
-  products: WCProduct[]
+  products: Product[]
 }
 
 export default function ProductGrid({ products }: Props) {
@@ -13,7 +13,7 @@ export default function ProductGrid({ products }: Props) {
   return (
     <div className="products">
       {products.map(product => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product._id} product={product} />
       ))}
     </div>
   )

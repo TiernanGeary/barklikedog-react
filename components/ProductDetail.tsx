@@ -3,66 +3,54 @@
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import type { WCProduct, WCVariation } from '@/lib/types'
-import { addToCartUrl } from '@/lib/woocommerce'
+import { PortableText } from 'next-sanity'
+import type { Product } from '@/lib/types'
 
 interface Props {
-  product: WCProduct
-  variations: WCVariation[]
+  product: Product
 }
 
-export default function ProductDetail({ product, variations }: Props) {
+export default function ProductDetail({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0)
-  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({})
+  const [selectedVariant, setSelectedVariant] = useState<string>('')
 
-  // For variable products, find the matched variation
-  const matchedVariation = useMemo<WCVariation | null>(() => {
-    if (product.type !== 'variable' || !variations.length) return null
-    const attrCount = product.attributes.length
-    const allSelected = Object.keys(selectedAttrs).length === attrCount
-    if (!allSelected) return null
+  const matchedVariant = useMemo(() => {
+    if (!selectedVariant || !product.variants) return null
+    return product.variants.find(v => v.option === selectedVariant) ?? null
+  }, [selectedVariant, product.variants])
 
-    return variations.find(v =>
-      v.attributes.every(a => selectedAttrs[a.name] === a.option)
-    ) ?? null
-  }, [selectedAttrs, variations, product])
+  const displayPrice = matchedVariant?.price ?? product.salePrice ?? product.price
 
-  const displayPrice = matchedVariation
-    ? matchedVariation.price_html
-    : product.price_html
+  const images = product.images || []
+  const currentImage = images[selectedImage]?.asset?.url
 
-  const cartUrl = useMemo(() => {
-    if (product.type === 'variable') {
-      if (!matchedVariation) return null
-      return addToCartUrl(product, {
-        variationId: matchedVariation.id,
-        attributes: selectedAttrs,
-      })
-    }
-    return addToCartUrl(product)
-  }, [product, matchedVariation, selectedAttrs])
+  const variantNames = useMemo(() => {
+    if (!product.variants?.length) return []
+    const names = new Set(product.variants.map(v => v.name))
+    return Array.from(names)
+  }, [product.variants])
 
   return (
     <div className="single-product">
       <div className="product">
         {/* Images */}
         <div className="product-images">
-          {product.images[selectedImage] && (
+          {currentImage && (
             <Image
-              src={product.images[selectedImage].src}
-              alt={product.images[selectedImage].alt || product.name}
+              src={currentImage}
+              alt={images[selectedImage]?.alt || product.name}
               width={800}
               height={800}
               style={{ width: '100%', height: 'auto' }}
               priority
             />
           )}
-          {product.images.length > 1 && (
+          {images.length > 1 && (
             <div className="product-gallery">
-              {product.images.slice(1).map((img, i) => (
+              {images.slice(1).map((img, i) => (
                 <Image
                   key={i}
-                  src={img.src}
+                  src={img.asset?.url}
                   alt={img.alt || product.name}
                   width={800}
                   height={800}
@@ -80,69 +68,58 @@ export default function ProductDetail({ product, variations }: Props) {
 
           <h1 className="product-title">{product.name}</h1>
 
-          <div
-            className="price"
-            dangerouslySetInnerHTML={{ __html: displayPrice }}
-          />
+          <div className="price">
+            {product.salePrice && !matchedVariant ? (
+              <>
+                <del>${product.price.toFixed(2)}</del>{' '}
+                <ins>${product.salePrice.toFixed(2)}</ins>
+              </>
+            ) : (
+              <span>${displayPrice.toFixed(2)}</span>
+            )}
+          </div>
 
-          {product.product_year && (
+          {product.year && (
             <div className="product-meta-item">
               <span className="product-meta-label">Year: </span>
-              {product.product_year}
+              {product.year}
             </div>
           )}
 
-          {/* Variations */}
-          {product.type === 'variable' && product.attributes.length > 0 && (
+          {/* Variants */}
+          {product.productType === 'variable' && product.variants && variantNames.length > 0 && (
             <div className="variations">
-              {product.attributes.map(attr => (
-                <div key={attr.id} className="variation-row">
-                  <label htmlFor={`attr-${attr.id}`}>{attr.name}</label>
+              {variantNames.map(name => (
+                <div key={name} className="variation-row">
+                  <label>{name}</label>
                   <select
-                    id={`attr-${attr.id}`}
-                    value={selectedAttrs[attr.name] ?? ''}
-                    onChange={e =>
-                      setSelectedAttrs(prev => ({
-                        ...prev,
-                        [attr.name]: e.target.value,
-                      }))
-                    }
+                    value={selectedVariant}
+                    onChange={e => setSelectedVariant(e.target.value)}
                   >
-                    <option value="">Select {attr.name}</option>
-                    {attr.options.map(opt => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
+                    <option value="">Select {name}</option>
+                    {product.variants!
+                      .filter(v => v.name === name)
+                      .map(v => (
+                        <option key={v.option} value={v.option}>
+                          {v.option}
+                        </option>
+                      ))}
                   </select>
                 </div>
               ))}
             </div>
           )}
 
-          {product.short_description && (
-            <div
-              className="product-description"
-              dangerouslySetInnerHTML={{ __html: product.short_description }}
-            />
+          {product.shortDescription && (
+            <div className="product-description">
+              <p>{product.shortDescription}</p>
+            </div>
           )}
 
-          {cartUrl ? (
-            <a href={cartUrl} className="button add_to_cart_button">
-              Add to Cart
-            </a>
-          ) : product.type === 'variable' ? (
-            <button className="button add_to_cart_button" disabled>
-              Select options
-            </button>
-          ) : null}
-
           {product.description && (
-            <div
-              className="entry-content"
-              style={{ marginTop: '30px' }}
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
+            <div className="entry-content" style={{ marginTop: '30px' }}>
+              <PortableText value={product.description} />
+            </div>
           )}
         </div>
       </div>

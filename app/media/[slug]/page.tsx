@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getMediaItem, getFeaturedImage } from '@/lib/wordpress'
+import { PortableText } from 'next-sanity'
+import { getMediaItem } from '@/lib/sanity'
 import AudioPlayer from '@/components/AudioPlayer'
 
 interface Props {
@@ -23,52 +24,49 @@ export default async function MediaItemPage({ params }: Props) {
   const item = await getMediaItem(slug).catch(() => null)
   if (!item) notFound()
 
-  const img = getFeaturedImage(item)
-  const mediaType = item.nv_media_type || 'photo'
+  const img = item.featuredImage?.asset?.url
+  const audioUrl = item.audioFile?.asset?.url
 
   return (
     <div className="page-content">
       <div className="single-media">
         {/* Left: media content */}
         <div className="single-media-content">
-          {mediaType === 'audio' && item.nv_audio_url ? (
+          {item.mediaType === 'audio' && audioUrl ? (
             <>
               {img && (
                 <Image
-                  src={img.src}
-                  alt={img.alt || item.title.rendered}
+                  src={img}
+                  alt={item.featuredImage?.alt || item.title}
                   width={600}
                   height={600}
                   style={{ width: '100%', height: 'auto', marginBottom: '0' }}
                   priority
                 />
               )}
-              <AudioPlayer
-                src={item.nv_audio_url}
-                description={item.content.rendered}
-              />
+              <AudioPlayer src={audioUrl} />
             </>
-          ) : mediaType === 'video' && item.nv_video_url ? (
+          ) : item.mediaType === 'video' && item.videoUrl ? (
             <div className="media-video-embed">
               {(() => {
-                const embedUrl = getYouTubeEmbedUrl(item.nv_video_url)
+                const embedUrl = getYouTubeEmbedUrl(item.videoUrl)
                 if (embedUrl) {
                   return (
                     <iframe
                       src={embedUrl}
-                      title={item.title.rendered}
+                      title={item.title}
                       allowFullScreen
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     />
                   )
                 }
-                return <video src={item.nv_video_url} controls style={{ width: '100%' }} />
+                return <video src={item.videoUrl} controls style={{ width: '100%' }} />
               })()}
             </div>
           ) : img ? (
             <Image
-              src={img.src}
-              alt={img.alt || item.title.rendered}
+              src={img}
+              alt={item.featuredImage?.alt || item.title}
               width={800}
               height={800}
               style={{ width: '100%', height: 'auto' }}
@@ -81,19 +79,14 @@ export default async function MediaItemPage({ params }: Props) {
         <div className="single-media-info">
           <Link href="/media" className="back-link">← Media</Link>
 
-          <h1
-            className="single-media-title"
-            dangerouslySetInnerHTML={{ __html: item.title.rendered }}
-          />
+          <h1 className="single-media-title">{item.title}</h1>
 
-          <div className="single-media-type">{mediaType}</div>
+          <div className="single-media-type">{item.mediaType}</div>
 
-          {/* Description shown separately for non-audio (audio renders it in the player) */}
-          {mediaType !== 'audio' && item.content.rendered && (
-            <div
-              className="single-media-description"
-              dangerouslySetInnerHTML={{ __html: item.content.rendered }}
-            />
+          {item.mediaType !== 'audio' && item.description && (
+            <div className="single-media-description">
+              <PortableText value={item.description} />
+            </div>
           )}
         </div>
       </div>
@@ -104,5 +97,5 @@ export default async function MediaItemPage({ params }: Props) {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params
   const item = await getMediaItem(slug).catch(() => null)
-  return { title: item ? item.title.rendered.replace(/<[^>]+>/g, '') : 'Media' }
+  return { title: item?.title ?? 'Media' }
 }

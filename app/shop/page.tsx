@@ -1,4 +1,4 @@
-import { getProducts, getCategories } from '@/lib/woocommerce'
+import { getProducts, getProductCategories } from '@/lib/sanity'
 import ProductGrid from '@/components/ProductGrid'
 import ShopFilterBar from '@/components/ShopFilterBar'
 
@@ -10,14 +10,18 @@ export default async function ShopPage({ searchParams }: Props) {
   const { category } = await searchParams
 
   const [products, categories] = await Promise.all([
-    getProducts({ categorySlug: category }).catch(() => []),
-    getCategories().catch(() => []),
+    getProducts().catch(() => []),
+    getProductCategories().catch(() => []),
   ])
+
+  const filtered = category
+    ? products.filter(p => p.categories?.some(c => c.slug.current === category))
+    : products
 
   return (
     <div className="page-content">
       <ShopFilterBar categories={categories} activeSlug={category} />
-      <ProductGrid products={products} />
+      <ProductGrid products={filtered} />
     </div>
   )
 }

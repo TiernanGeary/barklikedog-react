@@ -1,4 +1,4 @@
-import { getMediaItems } from '@/lib/wordpress'
+import { getMediaItems } from '@/lib/sanity'
 import MediaGrid from '@/components/MediaGrid'
 
 export default async function MediaPage() {

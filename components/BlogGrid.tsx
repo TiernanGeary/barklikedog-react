@@ -1,10 +1,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import type { WPPost } from '@/lib/types'
-import { getFeaturedImage } from '@/lib/wordpress'
+import type { Post } from '@/lib/types'
 
 interface Props {
-  posts: WPPost[]
+  posts: Post[]
 }
 
 function formatDate(dateStr: string): string {
@@ -22,28 +21,25 @@ export default function BlogGrid({ posts }: Props) {
 
   return (
     <div className="posts-list">
-      {/* Featured (first/latest) post */}
       <FeaturedPost post={featured} />
-
-      {/* Remaining posts in 2-col grid */}
       {rest.map(post => (
-        <RegularPost key={post.id} post={post} />
+        <RegularPost key={post._id} post={post} />
       ))}
     </div>
   )
 }
 
-function FeaturedPost({ post }: { post: WPPost }) {
-  const img = getFeaturedImage(post)
+function FeaturedPost({ post }: { post: Post }) {
+  const img = post.featuredImage?.asset?.url
 
   return (
     <article className="post-item post-item--featured">
-      <Link href={`/posts/${post.slug}`} className="post-item-link">
+      <Link href={`/posts/${post.slug.current}`} className="post-item-link">
         {img && (
           <div className="post-item-image">
             <Image
-              src={img.src}
-              alt={img.alt || post.title.rendered}
+              src={img}
+              alt={post.featuredImage?.alt || post.title}
               width={800}
               height={340}
               style={{ width: '100%', height: '340px', objectFit: 'cover' }}
@@ -53,51 +49,47 @@ function FeaturedPost({ post }: { post: WPPost }) {
         )}
         <div className="post-item-content">
           <span className="post-item-label">Latest</span>
-          <h2
-            className="post-item-title"
-            dangerouslySetInnerHTML={{ __html: post.title.rendered }}
-          />
+          <h2 className="post-item-title">{post.title}</h2>
           <div className="post-item-meta">
-            <time dateTime={post.date}>{formatDate(post.date)}</time>
+            <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
           </div>
-          <div
-            className="post-item-excerpt"
-            dangerouslySetInnerHTML={{ __html: post.excerpt.rendered }}
-          />
+          {post.excerpt && (
+            <div className="post-item-excerpt">
+              <p>{post.excerpt}</p>
+            </div>
+          )}
         </div>
       </Link>
     </article>
   )
 }
 
-function RegularPost({ post }: { post: WPPost }) {
-  const img = getFeaturedImage(post)
+function RegularPost({ post }: { post: Post }) {
+  const img = post.featuredImage?.asset?.url
 
   return (
     <article className="post-item">
-      <Link href={`/posts/${post.slug}`} className="post-item-link">
+      <Link href={`/posts/${post.slug.current}`} className="post-item-link">
         {img && (
           <div className="post-item-image">
             <Image
-              src={img.src}
-              alt={img.alt || post.title.rendered}
+              src={img}
+              alt={post.featuredImage?.alt || post.title}
               width={400}
               height={180}
               style={{ width: '100%', height: '180px', objectFit: 'cover' }}
             />
           </div>
         )}
-        <h2
-          className="post-item-title"
-          dangerouslySetInnerHTML={{ __html: post.title.rendered }}
-        />
+        <h2 className="post-item-title">{post.title}</h2>
         <div className="post-item-meta">
-          <time dateTime={post.date}>{formatDate(post.date)}</time>
+          <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
         </div>
-        <div
-          className="post-item-excerpt"
-          dangerouslySetInnerHTML={{ __html: post.excerpt.rendered }}
-        />
+        {post.excerpt && (
+          <div className="post-item-excerpt">
+            <p>{post.excerpt}</p>
+          </div>
+        )}
       </Link>
     </article>
   )

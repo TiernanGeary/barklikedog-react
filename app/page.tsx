@@ -1,4 +1,5 @@
-import { getPage } from '@/lib/wordpress'
+import { getPage } from '@/lib/sanity'
+import { PortableText } from 'next-sanity'
 
 export default async function HomePage() {
   const page = await getPage('home').catch(() => null)
@@ -6,11 +7,10 @@ export default async function HomePage() {
   return (
     <div className="page-content">
       <div className="front-page-content">
-        {page ? (
-          <div
-            className="entry-content"
-            dangerouslySetInnerHTML={{ __html: page.content.rendered }}
-          />
+        {page?.body ? (
+          <div className="entry-content">
+            <PortableText value={page.body} />
+          </div>
         ) : (
           <p>Welcome to Bark Like Dog.</p>
         )}

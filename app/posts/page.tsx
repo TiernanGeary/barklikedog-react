@@ -1,4 +1,4 @@
-import { getPosts } from '@/lib/wordpress'
+import { getPosts } from '@/lib/sanity'
 import BlogGrid from '@/components/BlogGrid'
 
 export default async function PostsPage() {

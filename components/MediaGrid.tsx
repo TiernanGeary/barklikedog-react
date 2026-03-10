@@ -1,43 +1,30 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import type { WPMediaItem } from '@/lib/types'
-import { getFeaturedImage } from '@/lib/wordpress'
+import type { MediaItem } from '@/lib/types'
 
 interface Props {
-  items: WPMediaItem[]
+  items: MediaItem[]
 }
 
 export default function MediaGrid({ items }: Props) {
   if (!items.length) return <p>No media found.</p>
 
-  // Sort: featured first (nv_media_featured === '1'), then by nv_media_order ASC, then date DESC
-  const sorted = [...items].sort((a, b) => {
-    const aFeat = a.nv_media_featured === '1' ? 1 : 0
-    const bFeat = b.nv_media_featured === '1' ? 1 : 0
-    if (bFeat !== aFeat) return bFeat - aFeat
-    const aOrd = parseInt(a.nv_media_order || '999', 10)
-    const bOrd = parseInt(b.nv_media_order || '999', 10)
-    if (aOrd !== bOrd) return aOrd - bOrd
-    return new Date(b.date).getTime() - new Date(a.date).getTime()
-  })
-
   return (
     <div className="media-grid">
-      {sorted.map(item => {
-        const img = getFeaturedImage(item)
-        const isFeatured = item.nv_media_featured === '1'
+      {items.map(item => {
+        const img = item.featuredImage?.asset?.url
 
         return (
           <div
-            key={item.id}
-            className={`media-item${isFeatured ? ' media-item-featured' : ''}`}
+            key={item._id}
+            className={`media-item${item.featured ? ' media-item-featured' : ''}`}
           >
-            <Link href={`/media/${item.slug}`}>
+            <Link href={`/media/${item.slug.current}`}>
               <div className="media-image-wrapper">
                 {img ? (
                   <Image
-                    src={img.src}
-                    alt={img.alt || item.title.rendered}
+                    src={img}
+                    alt={item.featuredImage?.alt || item.title}
                     width={400}
                     height={400}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -46,10 +33,7 @@ export default function MediaGrid({ items }: Props) {
                   <div className="media-placeholder" />
                 )}
               </div>
-              <div
-                className="media-item-title"
-                dangerouslySetInnerHTML={{ __html: item.title.rendered }}
-              />
+              <div className="media-item-title">{item.title}</div>
             </Link>
           </div>
         )

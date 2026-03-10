@@ -1,92 +1,76 @@
-export interface WPPost {
-  id: number
-  slug: string
-  title: { rendered: string }
-  content: { rendered: string }
-  excerpt: { rendered: string }
-  date: string
-  featured_media: number
-  _embedded?: {
-    'wp:featuredmedia'?: Array<{
-      source_url: string
-      alt_text: string
-    }>
-    'wp:term'?: Array<Array<{ id: number; name: string; slug: string }>>
+import type { PortableTextBlock } from 'next-sanity'
+
+export interface SanityImage {
+  _type: 'image'
+  asset: {
+    _ref: string
+    url: string
   }
+  alt?: string
+  hotspot?: { x: number; y: number }
 }
 
-export interface WPPage {
-  id: number
-  slug: string
-  title: { rendered: string }
-  content: { rendered: string }
-}
-
-export interface WPMediaItem {
-  id: number
-  slug: string
-  title: { rendered: string }
-  content: { rendered: string }
-  date: string
-  featured_media: number
-  nv_media_type: string        // 'photo' | 'video' | 'audio'
-  nv_video_url: string
-  nv_audio_url: string
-  nv_media_featured: string    // '0' | '1'
-  nv_media_order: string
-  _embedded?: {
-    'wp:featuredmedia'?: Array<{
-      source_url: string
-      alt_text: string
-    }>
-  }
-}
-
-export interface WCProduct {
-  id: number
-  slug: string
+export interface Category {
+  _id: string
   name: string
-  price: string
-  regular_price: string
-  sale_price: string
-  price_html: string
-  images: Array<{ src: string; alt: string }>
-  categories: Array<{ id: number; name: string; slug: string }>
-  short_description: string
-  description: string
-  product_year?: string
-  type: string   // 'simple' | 'variable'
-  attributes: Array<{
-    id: number
-    name: string
-    options: string[]
-  }>
-  variations: number[]
+  slug: { current: string }
 }
 
-export interface WCVariation {
-  id: number
-  price: string
-  price_html: string
-  attributes: Array<{
+export interface Product {
+  _id: string
+  name: string
+  slug: { current: string }
+  price: number
+  salePrice?: number
+  images: SanityImage[]
+  categories: Category[]
+  shortDescription?: string
+  description?: PortableTextBlock[]
+  year?: string
+  productType: 'simple' | 'variable'
+  variants?: Array<{
     name: string
     option: string
+    price: number
   }>
 }
 
-export interface WCCategory {
-  id: number
-  name: string
-  slug: string
-  count: number
+export interface Post {
+  _id: string
+  title: string
+  slug: { current: string }
+  featuredImage?: SanityImage
+  excerpt?: string
+  body?: PortableTextBlock[]
+  publishedAt: string
+  categories?: Category[]
 }
 
-export interface WPComment {
-  id: number
+export interface MediaItem {
+  _id: string
+  title: string
+  slug: { current: string }
+  mediaType: 'photo' | 'video' | 'audio'
+  featuredImage?: SanityImage
+  description?: PortableTextBlock[]
+  videoUrl?: string
+  audioFile?: { asset: { url: string } }
+  featured: boolean
+  order: number
+  publishedAt: string
+}
+
+export interface Page {
+  _id: string
+  title: string
+  slug: { current: string }
+  body?: PortableTextBlock[]
+}
+
+export interface Comment {
+  _id: string
   author_name: string
-  author_url: string
   date: string
-  content: { rendered: string }
-  parent: number
-  status: string
+  content: string
+  parent?: string
 }
