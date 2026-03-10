@@ -22,6 +22,7 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
 
 # debug
@@ -39,3 +40,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# WordPress
+wp-config.php
+uploads/
+theme.zip
+
+# Gate video (too large for git — upload separately to server)
+assets/gate-video.mp4
+
+# Task tracking (local only)
+tasks/

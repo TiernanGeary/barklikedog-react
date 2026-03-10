@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="60" height="72">
+  <!-- Outer shield outline -->
+  <path d="M 50 10 L 85 28 L 85 55 Q 85 85 50 105 Q 15 85 15 55 L 15 28 Z"
+        fill="none"
+        stroke="#333333"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Inner shield outline (double-line effect) -->
+  <path d="M 50 18 L 78 32 L 78 55 Q 78 80 50 97 Q 22 80 22 55 L 22 32 Z"
+        fill="none"
+        stroke="#333333"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+</svg>

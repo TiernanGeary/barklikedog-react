@@ -1,0 +1,31 @@
+{
+  "name": "Niche Vault",
+  "description": "A minimal WooCommerce theme for art and collectibles stores",
+  "version": "1.0.0",
+  "author": "Niche Vault",
+  "license": "GPL v3 or later",
+  "woocommerce": true,
+  "responsive": true,
+  "features": {
+    "sidebar": "fixed-left",
+    "sidebar_width": "180px",
+    "product_grid": {
+      "desktop": 5,
+      "tablet": 4,
+      "mobile": 3,
+      "small_mobile": 2
+    },
+    "typography": "monospace",
+    "primary_font": "Courier New",
+    "colors": {
+      "background": "#ffffff",
+      "text": "#333333",
+      "border": "#f0f0f0"
+    }
+  },
+  "supported_plugins": [
+    "woocommerce"
+  ],
+  "minimum_wordpress": "5.0",
+  "minimum_php": "7.4"
+}
