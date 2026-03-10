@@ -5,7 +5,8 @@ import { media } from './media'
 import { category } from './category'
 import { page } from './page'
 import { blockContent } from './blockContent'
+import { siteSettings } from './siteSettings'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [product, post, media, category, page, blockContent],
+  types: [siteSettings, product, post, media, category, page, blockContent],
 }

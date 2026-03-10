@@ -2,6 +2,15 @@ import { client } from '@/sanity/lib/client'
 import imageUrlBuilder from '@sanity/image-url'
 import type { Product, Post, MediaItem, Page, Category, SanityImage } from './types'
 
+// ── Site Settings ───────────────────────────────────────────────────────────
+
+export async function isComingSoon(): Promise<boolean> {
+  const settings = await client.fetch(
+    `*[_type == "siteSettings" && _id == "siteSettings"][0] { comingSoon }`
+  )
+  return settings?.comingSoon ?? false
+}
+
 // ── Image URL helper ────────────────────────────────────────────────────────
 
 const builder = imageUrlBuilder(client)

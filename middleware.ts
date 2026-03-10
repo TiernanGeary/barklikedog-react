@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || ''
+const DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
+const SANITY_QUERY_URL = `https://${PROJECT_ID}.api.sanity.io/v2026-03-10/data/query/${DATASET}`
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Never gate the gate page itself, studio, static assets, or API routes
+  // Never gate the gate page, studio, static assets, or API routes
   if (
     pathname === '/gate' ||
     pathname.startsWith('/studio') ||
@@ -14,21 +18,30 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Coming soon mode: set COMING_SOON=true in Vercel env vars to activate
-  const comingSoon = process.env.COMING_SOON === 'true'
-  if (!comingSoon) {
-    return NextResponse.next()
-  }
-
   // If user has the access cookie, let them through
   if (req.cookies.get('nv_site_access')) {
     return NextResponse.next()
   }
 
-  // Show gate page
-  const gateUrl = req.nextUrl.clone()
-  gateUrl.pathname = '/gate'
-  return NextResponse.rewrite(gateUrl)
+  // Check Sanity for coming soon status
+  try {
+    const query = encodeURIComponent('*[_type == "siteSettings" && _id == "siteSettings"][0].comingSoon')
+    const res = await fetch(`${SANITY_QUERY_URL}?query=${query}`, {
+      next: { revalidate: 30 },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.result === true) {
+        const gateUrl = req.nextUrl.clone()
+        gateUrl.pathname = '/gate'
+        return NextResponse.rewrite(gateUrl)
+      }
+    }
+  } catch {
+    // If Sanity is unreachable, let traffic through
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
