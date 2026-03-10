@@ -49,12 +49,15 @@ const styles = `
   position: absolute;
   inset: 0;
   z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .gate-video-wrap video {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  display: block;
 }
 
 .gate-content {
