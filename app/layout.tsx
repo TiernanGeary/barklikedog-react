@@ -6,6 +6,9 @@ import PageTransition from '@/components/PageTransition'
 export const metadata: Metadata = {
   title: 'Bark Like Dog',
   description: 'Art and collectibles.',
+  icons: {
+    icon: '/firehydrant.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
