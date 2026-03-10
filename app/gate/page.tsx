@@ -12,13 +12,6 @@ export default function GatePage() {
         </video>
       </div>
 
-      {/* Logo centered */}
-      <div className="gate-content">
-        <div className="gate-logo">
-          <img src="/houndstooth.png" alt="Bark Like Dog" />
-        </div>
-      </div>
-
       <div className="gate-footer">
         <span>Bark Like Dog</span>
       </div>
@@ -56,31 +49,6 @@ const styles = `
   width: 100%;
   height: auto;
   display: block;
-}
-
-.gate-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  pointer-events: none;
-}
-
-.gate-logo {
-  width: 64px;
-  height: 64px;
-  opacity: 0;
-  animation: gate-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
-}
-
-.gate-logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: none;
 }
 
 @keyframes gate-rise {
