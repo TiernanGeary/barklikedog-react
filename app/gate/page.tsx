@@ -27,8 +27,6 @@ export default function GatePage() {
 }
 
 const styles = `
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
-
 /* Hide the root layout sidebar and footer */
 #sidebar,
 #footer {
@@ -39,9 +37,9 @@ const styles = `
   position: fixed;
   inset: 0;
   z-index: 99999;
-  font-family: 'DM Mono', 'Courier New', monospace;
-  color: #f5f5f0;
-  background: #0a0a0a;
+  font-family: 'Courier New', Courier, monospace;
+  color: #333333;
+  background: #ffffff;
   overflow: hidden;
 }
 
@@ -82,7 +80,7 @@ const styles = `
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: brightness(0) invert(1);
+  filter: none;
 }
 
 @keyframes gate-rise {
@@ -107,6 +105,6 @@ const styles = `
   font-size: 0.6rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: rgba(245, 245, 240, 0.25);
+  color: rgba(0, 0, 0, 0.3);
 }
 `
