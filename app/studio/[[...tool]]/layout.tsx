@@ -7,6 +7,11 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
           margin-left: 0 !important;
           padding: 0 !important;
           max-width: 100% !important;
+          width: 100% !important;
+        }
+        .page-content {
+          padding: 0 !important;
+          max-width: 100% !important;
         }
         body { margin: 0; padding: 0; overflow: hidden; }
       `}</style>
