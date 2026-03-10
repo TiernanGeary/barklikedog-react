@@ -52,8 +52,6 @@ wp-config.php
 uploads/
 theme.zip
 
-# Gate video (too large for git — upload separately to server)
-assets/gate-video.mp4
 
 # Task tracking (local only)
 tasks/

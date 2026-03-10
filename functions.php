@@ -660,13 +660,32 @@ function niche_vault_gate_settings_init() {
 add_action( 'admin_init', 'niche_vault_gate_settings_init' );
 
 /**
+ * REST API endpoint for React frontend to check gate status
+ * GET /wp-json/nv/v1/gate → { coming_soon: bool, password_hash: string }
+ */
+add_action( 'rest_api_init', function() {
+	register_rest_route( 'nv/v1', '/gate', array(
+		'methods'             => 'GET',
+		'callback'            => function() {
+			$coming_soon   = get_option( 'woocommerce_coming_soon', 'no' ) === 'yes';
+			$gate_password = get_option( 'nv_gate_password', 'niche2026' );
+			return rest_ensure_response( array(
+				'coming_soon'   => $coming_soon,
+				'password_hash' => md5( $gate_password . 'nv_salt' ),
+			) );
+		},
+		'permission_callback' => '__return_true',
+	) );
+} );
+
+/**
  * Password gate handler — active when blog_public != 1 (Coming Soon / non-public)
  */
 function niche_vault_password_gate() {
-	// Only activate when site is NOT public (Coming Soon or Discourage search engines)
-	// blog_public: 1 = public, 0 = discourage search engines / coming soon
-	$blog_public = (int) get_option( 'blog_public', 1 );
-	if ( $blog_public === 1 ) {
+	// Only activate when WooCommerce Coming Soon is enabled
+	// WooCommerce 9.1+ stores this as 'yes'/'no' in woocommerce_coming_soon
+	$coming_soon = get_option( 'woocommerce_coming_soon', 'no' );
+	if ( $coming_soon !== 'yes' ) {
 		return;
 	}
 
