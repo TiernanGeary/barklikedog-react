@@ -38,7 +38,7 @@ export default function Sidebar() {
         <Link href="/">
           <Image
             src="/houndstooth.png"
-            alt="Niche Vault"
+            alt="Bark Like Dog"
             width={50}
             height={50}
             className="site-logo"

@@ -5,7 +5,7 @@ export default function GatePage() {
     <div className="gate-page">
       <style>{styles}</style>
 
-      {/* Video background — fits window width, no darkening */}
+      {/* Video background */}
       <div className="gate-video-wrap">
         <video autoPlay loop muted playsInline>
           <source src="/gate-video.mp4" type="video/mp4" />
@@ -15,12 +15,12 @@ export default function GatePage() {
       {/* Logo centered */}
       <div className="gate-content">
         <div className="gate-logo">
-          <img src="/houndstooth.png" alt="Niche Vault" />
+          <img src="/houndstooth.png" alt="Bark Like Dog" />
         </div>
       </div>
 
       <div className="gate-footer">
-        <span>Niche Vault</span>
+        <span>Bark Like Dog</span>
       </div>
     </div>
   )
@@ -29,10 +29,9 @@ export default function GatePage() {
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
 
-/* Hide the root layout sidebar and footer behind the gate */
+/* Hide the root layout sidebar and footer */
 #sidebar,
-#footer,
-#main-content {
+#footer {
   display: none !important;
 }
 

@@ -4,7 +4,7 @@ import Sidebar from '@/components/Sidebar'
 import PageTransition from '@/components/PageTransition'
 
 export const metadata: Metadata = {
-  title: 'Niche Vault',
+  title: 'Bark Like Dog',
   description: 'Art and collectibles.',
 }
 
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </PageTransition>
         <footer id="footer">
-          <p>© {new Date().getFullYear()} Niche Vault</p>
+          <p>© {new Date().getFullYear()} Bark Like Dog</p>
         </footer>
       </body>
     </html>

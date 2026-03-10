@@ -12,7 +12,7 @@ export default async function HomePage() {
             dangerouslySetInnerHTML={{ __html: page.content.rendered }}
           />
         ) : (
-          <p>Welcome to Niche Vault.</p>
+          <p>Welcome to Bark Like Dog.</p>
         )}
       </div>
     </div>
