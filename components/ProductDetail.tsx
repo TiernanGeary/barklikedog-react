@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { PortableText } from 'next-sanity'
@@ -13,6 +13,7 @@ interface Props {
 export default function ProductDetail({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState<string>('')
+  const [loading, setLoading] = useState(false)
 
   const matchedVariant = useMemo(() => {
     if (!selectedVariant || !product.variants) return null
@@ -23,6 +24,26 @@ export default function ProductDetail({ product }: Props) {
 
   const images = product.images || []
   const currentImage = images[selectedImage]?.asset?.url
+
+  const priceId = matchedVariant?.stripePriceId ?? product.stripePriceId
+
+  const handleBuy = useCallback(async () => {
+    if (!priceId) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [priceId])
 
   const variantNames = useMemo(() => {
     if (!product.variants?.length) return []
@@ -108,6 +129,16 @@ export default function ProductDetail({ product }: Props) {
                 </div>
               ))}
             </div>
+          )}
+
+          {priceId && (
+            <button
+              className="buy-button"
+              onClick={handleBuy}
+              disabled={loading || (product.productType === 'variable' && !selectedVariant)}
+            >
+              {loading ? 'Redirecting...' : 'Buy Now'}
+            </button>
           )}
 
           {product.shortDescription && (

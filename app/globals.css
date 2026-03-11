@@ -338,6 +338,17 @@ body {
   font-weight: bold;
 }
 
+.buy-button {
+  margin-top: 16px;
+  margin-bottom: 16px;
+  padding: 10px 24px;
+}
+
+.buy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .product-description {
   font-size: 12px;
   line-height: 1.2;
