@@ -39,7 +39,13 @@ export default function ProductDetail({ product }: Props) {
       const data = await res.json()
       if (data.url) {
         window.location.href = data.url
+      } else {
+        console.error('Checkout error:', data.error)
+        alert(data.error || 'Checkout failed')
       }
+    } catch (err) {
+      console.error('Checkout error:', err)
+      alert('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -137,7 +143,7 @@ export default function ProductDetail({ product }: Props) {
               onClick={handleBuy}
               disabled={loading || (product.productType === 'variable' && !selectedVariant)}
             >
-              {loading ? 'Redirecting...' : 'Buy Now'}
+              {loading ? 'Redirecting...' : 'Add to Cart'}
             </button>
           )}
 
