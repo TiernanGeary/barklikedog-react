@@ -58,6 +58,12 @@ export const product = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'stripePriceId',
+      title: 'Stripe Price ID',
+      type: 'string',
+      description: 'From Stripe Dashboard → Products → Price ID (starts with price_...)',
+    }),
+    defineField({
       name: 'productType',
       title: 'Product Type',
       type: 'string',
@@ -80,6 +86,7 @@ export const product = defineType({
             defineField({name: 'name', title: 'Name', type: 'string'}),
             defineField({name: 'option', title: 'Option', type: 'string'}),
             defineField({name: 'price', title: 'Price', type: 'number'}),
+            defineField({name: 'stripePriceId', title: 'Stripe Price ID', type: 'string'}),
           ],
         },
       ],

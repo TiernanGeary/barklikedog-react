@@ -27,11 +27,13 @@ export interface Product {
   shortDescription?: string
   description?: PortableTextBlock[]
   year?: string
+  stripePriceId?: string
   productType: 'simple' | 'variable'
   variants?: Array<{
     name: string
     option: string
     price: number
+    stripePriceId?: string
   }>
 }
 
