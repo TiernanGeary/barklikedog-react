@@ -64,7 +64,7 @@ export default function RadioPlayer({ tracks }: Props) {
     <div className="radio-page">
       <style>{styles}</style>
 
-      {/* Video background */}
+      {/* Video */}
       <div className="radio-video-wrap">
         <video
           autoPlay
@@ -83,9 +83,8 @@ export default function RadioPlayer({ tracks }: Props) {
       {/* Audio stream */}
       <audio ref={audioRef} src={STREAM_URL} preload="none" />
 
-      {/* Overlay UI */}
-      <div className="radio-overlay">
-        {/* Now playing */}
+      {/* Controls below video */}
+      <div className="radio-controls-area">
         <div className="radio-now-playing">
           <span className="radio-live-dot" />
           <span className="radio-live-label">LIVE</span>
@@ -94,7 +93,6 @@ export default function RadioPlayer({ tracks }: Props) {
           )}
         </div>
 
-        {/* Controls */}
         <div className="radio-controls">
           <button
             className="radio-play-btn"
@@ -132,7 +130,6 @@ export default function RadioPlayer({ tracks }: Props) {
           </div>
         </div>
 
-        {/* Track list from Sanity */}
         {tracks.length > 0 && (
           <div className="radio-tracklist">
             <div className="radio-tracklist-header">QUEUE</div>
@@ -159,55 +156,25 @@ export default function RadioPlayer({ tracks }: Props) {
 }
 
 const styles = `
-/* Hide sidebar and footer on radio page */
-#sidebar,
-#footer {
-  display: none !important;
-}
-
-#main-content {
-  margin-left: 0 !important;
-  width: 100% !important;
-}
-
 .radio-page {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  font-family: 'Courier New', Courier, monospace;
-  color: #ffffff;
-  background: #ffffff;
-  overflow: hidden;
+  padding: 40px 40px;
 }
 
 .radio-video-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  max-width: 100%;
+  margin-bottom: 20px;
 }
 
 .radio-video-wrap video {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: auto;
   display: block;
-  opacity: 1;
 }
 
-.radio-overlay {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 30px;
+.radio-controls-area {
+  color: #333333;
 }
 
-/* Now playing bar */
 .radio-now-playing {
   display: flex;
   align-items: center;
@@ -237,10 +204,8 @@ const styles = `
 
 .radio-now-title {
   font-size: 13px;
-  opacity: 0.9;
 }
 
-/* Controls */
 .radio-controls {
   display: flex;
   align-items: center;
@@ -250,7 +215,7 @@ const styles = `
 
 .radio-play-btn {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid #333333;
   cursor: pointer;
   width: 44px;
   height: 44px;
@@ -258,12 +223,12 @@ const styles = `
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: border-color 0.2s;
+  transition: opacity 0.2s;
   padding: 0;
 }
 
 .radio-play-btn:hover {
-  border-color: rgba(255, 255, 255, 0.7);
+  opacity: 0.6;
   background: none;
 }
 
@@ -273,7 +238,7 @@ const styles = `
   height: 0;
   border-style: solid;
   border-width: 8px 0 8px 14px;
-  border-color: transparent transparent transparent #ffffff;
+  border-color: transparent transparent transparent #333333;
   margin-left: 3px;
 }
 
@@ -288,10 +253,9 @@ const styles = `
   display: block;
   width: 4px;
   height: 16px;
-  background: #ffffff;
+  background: #333333;
 }
 
-/* Volume */
 .radio-volume {
   display: flex;
   align-items: center;
@@ -316,7 +280,7 @@ const styles = `
   appearance: none;
   width: 80px;
   height: 3px;
-  background: rgba(255, 255, 255, 0.3);
+  background: #e0e0e0;
   outline: none;
   cursor: pointer;
   border: none;
@@ -327,7 +291,7 @@ const styles = `
   appearance: none;
   width: 10px;
   height: 10px;
-  background: #ffffff;
+  background: #333333;
   border-radius: 50%;
   cursor: pointer;
 }
@@ -335,21 +299,17 @@ const styles = `
 .radio-vol-slider::-moz-range-thumb {
   width: 10px;
   height: 10px;
-  background: #ffffff;
+  background: #333333;
   border-radius: 50%;
   border: none;
   cursor: pointer;
 }
 
-/* Track list */
 .radio-tracklist {
   max-height: 40vh;
   overflow-y: auto;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #e0e0e0;
   padding: 16px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   max-width: 400px;
 }
 
@@ -401,10 +361,9 @@ const styles = `
   text-overflow: ellipsis;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .radio-overlay {
-    padding: 20px;
+  .radio-page {
+    padding: 20px 15px;
   }
 
   .radio-tracklist {
