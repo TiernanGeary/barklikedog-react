@@ -15,6 +15,7 @@ const NAV_GROUPS = [
     items: [
       { title: 'Posts', href: '/posts' },
       { title: 'Media', href: '/media' },
+      { title: 'Radio', href: '/radio' },
     ],
   },
   {

@@ -69,6 +69,18 @@ export interface Page {
   body?: PortableTextBlock[]
 }
 
+export interface RadioTrack {
+  title: string
+  label?: string
+  audioUrl: string
+  coverArt?: string
+}
+
+export interface RadioQueue {
+  tracks: RadioTrack[]
+  loopPlaylist: boolean
+}
+
 export interface Comment {
   _id: string
   author_name: string

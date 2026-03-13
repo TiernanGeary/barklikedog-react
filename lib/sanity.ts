@@ -1,6 +1,6 @@
 import { client } from '@/sanity/lib/client'
 import imageUrlBuilder from '@sanity/image-url'
-import type { Product, Post, MediaItem, Page, Category, SanityImage } from './types'
+import type { Product, Post, MediaItem, Page, Category, SanityImage, RadioQueue } from './types'
 
 // ── Site Settings ───────────────────────────────────────────────────────────
 
@@ -99,6 +99,22 @@ export async function getMediaItem(slug: string): Promise<MediaItem | null> {
       audioFile { asset-> { url } }
     }`,
     { slug }
+  )
+}
+
+// ── Radio ──────────────────────────────────────────────────────────────
+
+export async function getRadioQueue(): Promise<RadioQueue | null> {
+  return client.fetch(
+    `*[_type == "radioQueue"][0] {
+      loopPlaylist,
+      tracks[] {
+        label,
+        "title": trackRef->title,
+        "audioUrl": trackRef->audioFile.asset->url,
+        "coverArt": trackRef->featuredImage.asset->url
+      }
+    }`
   )
 }
 
