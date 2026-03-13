@@ -163,11 +163,14 @@ const styles = `
 .radio-video-wrap {
   max-width: 100%;
   margin-bottom: 20px;
+  aspect-ratio: 16 / 9;
+  background: #000000;
 }
 
 .radio-video-wrap video {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
   display: block;
 }
 
