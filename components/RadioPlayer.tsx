@@ -194,7 +194,7 @@ const styles = `
   height: 100%;
   object-fit: contain;
   display: block;
-  opacity: 0.6;
+  opacity: 0.85;
 }
 
 .radio-overlay {
