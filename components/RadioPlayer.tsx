@@ -176,7 +176,7 @@ const styles = `
   z-index: 99999;
   font-family: 'Courier New', Courier, monospace;
   color: #ffffff;
-  background: #000000;
+  background: #ffffff;
   overflow: hidden;
 }
 
@@ -194,7 +194,7 @@ const styles = `
   height: 100%;
   object-fit: contain;
   display: block;
-  opacity: 0.85;
+  opacity: 1;
 }
 
 .radio-overlay {
