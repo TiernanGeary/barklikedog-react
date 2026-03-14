@@ -436,12 +436,12 @@ const styles = `
   display: flex;
   gap: 20px;
   align-items: stretch;
-  height: 320px;
+  max-height: 340px;
 }
 
 .radio-left {
-  width: 350px;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -538,11 +538,7 @@ const styles = `
 
   .radio-bottom {
     flex-direction: column;
-    height: auto;
-  }
-
-  .radio-left {
-    width: 100%;
+    max-height: none;
   }
 
   .radio-tracklist {
@@ -550,16 +546,15 @@ const styles = `
   }
 
   .radio-chat {
-    width: 100% !important;
     height: 300px;
   }
 }
 
 .radio-chat {
-  width: 350px;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
   border: 1px solid #e0e0e0;
 }
 
@@ -639,6 +634,7 @@ const styles = `
   display: flex;
   gap: 0;
   margin-top: auto;
+  padding: 0 20px 10px;
 }
 
 .radio-chat-name-tag {
