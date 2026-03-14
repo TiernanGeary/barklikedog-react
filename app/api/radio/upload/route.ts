@@ -16,7 +16,7 @@ const ALLOWED_TYPES = [
 // The file itself is uploaded directly to Sanity from the client via the upload proxy on the VPS.
 export async function POST(request: NextRequest) {
   try {
-    const { title, assetId, mimeType } = await request.json()
+    const { title, assetId, mimeType, duration, source } = await request.json()
 
     if (!title || !assetId) {
       return NextResponse.json(
@@ -28,6 +28,14 @@ export async function POST(request: NextRequest) {
     if (mimeType && !ALLOWED_TYPES.includes(mimeType)) {
       return NextResponse.json(
         { error: 'Invalid file type.' },
+        { status: 400 },
+      )
+    }
+
+    // Enforce 5-minute limit for listener uploads
+    if (duration && duration > 300) {
+      return NextResponse.json(
+        { error: 'Track exceeds 5 minute limit' },
         { status: 400 },
       )
     }
@@ -53,6 +61,8 @@ export async function POST(request: NextRequest) {
           mediaType: 'audio',
           audioFile: { _type: 'file', asset: { _type: 'reference', _ref: assetId } },
           uploadedBy: 'listener',
+          ...(source && { source }),
+          ...(duration && { duration }),
           status,
           publishedAt: new Date().toISOString(),
         },

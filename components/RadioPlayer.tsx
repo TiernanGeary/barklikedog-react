@@ -57,7 +57,8 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
           disablePictureInPicture
           controlsList="nodownload nofullscreen noremoteplayback"
           onContextMenu={(e) => e.preventDefault()}
-          style={{ pointerEvents: 'none' }}
+          onCanPlay={(e) => (e.currentTarget.style.opacity = '1')}
+          style={{ pointerEvents: 'none', opacity: 0, transition: 'opacity 0.5s ease' }}
         >
           <source src="/djloop.mp4" type="video/mp4" />
         </video>
@@ -149,7 +150,7 @@ const styles = `
   max-width: 100%;
   margin-bottom: 20px;
   aspect-ratio: 16 / 9;
-  background: #000000;
+  background: #ffffff;
 }
 
 .radio-video-wrap video {
@@ -440,5 +441,90 @@ const styles = `
   font-size: 11px;
   color: #cd2f2f;
   margin-top: 8px;
+}
+
+.radio-upload-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+}
+
+.radio-upload-tab {
+  background: none;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  padding: 5px 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  color: #999;
+  transition: all 0.15s;
+}
+
+.radio-upload-tab:first-child {
+  border-right: none;
+}
+
+.radio-upload-tab-active {
+  color: #333;
+  background: #f5f5f5;
+  border-color: #333;
+}
+
+.radio-search-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.radio-search-form .radio-upload-title {
+  flex: 1;
+}
+
+.radio-search-results {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+}
+
+.radio-search-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.radio-search-result:last-child {
+  border-bottom: none;
+}
+
+.radio-search-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.radio-search-title {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.radio-search-meta {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.radio-search-limit {
+  font-size: 9px;
+  color: #cd2f2f;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
 }
 `

@@ -90,6 +90,14 @@ export interface RadioSettings {
   maxUploadSizeMB: number
 }
 
+export interface YouTubeResult {
+  videoId: string
+  title: string
+  artist: string
+  durationSeconds: number
+  durationText: string
+}
+
 export interface Comment {
   _id: string
   author_name: string
