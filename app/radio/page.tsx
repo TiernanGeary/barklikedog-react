@@ -23,7 +23,7 @@ const RADIO_SETTINGS_QUERY = `*[_type == "radioSettings"][0] {
   skipVoteThreshold
 }`
 
-const RADIO_CHAT_QUERY = `*[_type == "radioChatMessage"] | order(_createdAt desc) [0..49] {
+const RADIO_CHAT_QUERY = `*[_type == "radioChatMessage"] | order(_createdAt desc) [0..199] {
   _id, nickname, message, _createdAt
 } | order(_createdAt asc)`
 
