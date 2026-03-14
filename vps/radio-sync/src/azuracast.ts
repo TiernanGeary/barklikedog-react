@@ -4,19 +4,22 @@ const BASE_URL = process.env.AZURACAST_URL!
 const API_KEY = process.env.AZURACAST_API_KEY!
 const STATION_ID = process.env.AZURACAST_STATION_ID!
 
-const headers = {
+const headers: Record<string, string> = {
   'X-API-Key': API_KEY,
 }
 
-export interface NowPlayingSong {
-  title: string
-  artist: string
-  path: string
+const jsonHeaders: Record<string, string> = {
+  'X-API-Key': API_KEY,
+  'Content-Type': 'application/json',
 }
 
 export interface NowPlayingEvent {
   now_playing: {
-    song: NowPlayingSong
+    song: {
+      title: string
+      artist: string
+      path: string
+    }
     elapsed: number
     duration: number
   }
@@ -27,9 +30,6 @@ export async function getNowPlaying(): Promise<NowPlayingEvent> {
   return res.json()
 }
 
-// FIX 1: SSE-based now-playing subscription.
-// AzuraCast pushes now-playing changes instantly via SSE instead of us
-// polling every 15s. This eliminates latency and unnecessary API calls.
 export function subscribeNowPlaying(
   onUpdate: (np: NowPlayingEvent) => void,
 ): EventSource {
@@ -45,48 +45,42 @@ export function subscribeNowPlaying(
   es.onmessage = (event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data as string)
-      // AzuraCast SSE wraps the payload in a `pub` object with `data` inside
       const payload = data?.pub?.data?.np
       if (payload) {
         onUpdate(payload as NowPlayingEvent)
       }
     } catch {
-      // Non-JSON keepalive or malformed event — ignore
+      // Non-JSON keepalive — ignore
     }
   }
 
   es.onerror = () => {
     console.error('[azuracast] SSE error, will auto-reconnect')
-    // EventSource auto-reconnects by default
   }
 
   return es
 }
 
-export async function getPlaylistFiles(playlistId: number): Promise<any[]> {
-  const res = await fetch(
-    `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/files`,
-    { headers },
-  )
-  return res.json()
-}
-
+// Base64 JSON upload — the method that works with this AzuraCast instance
 export async function uploadMedia(
   fileBuffer: Buffer,
   filename: string,
-): Promise<{ id: number; unique_id: string; path: string }> {
-  const form = new FormData()
-  form.append('file', new Blob([new Uint8Array(fileBuffer)]), filename)
-  form.append('path', `sync/${filename}`)
+): Promise<{ id: number; path: string }> {
+  const base64 = fileBuffer.toString('base64')
 
   const res = await fetch(`${BASE_URL}/api/station/${STATION_ID}/files`, {
     method: 'POST',
-    headers: { 'X-API-Key': API_KEY },
-    body: form,
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      path: `sync/${filename}`,
+      file: base64,
+    }),
   })
 
-  if (!res.ok) throw new Error(`Upload failed: ${res.status}`)
-  return res.json()
+  const text = await res.text()
+  if (!res.ok) throw new Error(`Upload failed: ${res.status} ${text}`)
+  const data = JSON.parse(text)
+  return { id: data.id, path: data.path || `sync/${filename}` }
 }
 
 export async function ensurePlaylist(): Promise<number> {
@@ -103,7 +97,7 @@ export async function ensurePlaylist(): Promise<number> {
     `${BASE_URL}/api/station/${STATION_ID}/playlists`,
     {
       method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({
         name: 'Sanity Queue',
         type: 'default',
@@ -126,7 +120,7 @@ export async function setPlaylistOrder(
     `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/order`,
     {
       method: 'PUT',
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({
         order: mediaIds.map((id, i) => ({ id, weight: i + 1 })),
       }),
@@ -138,9 +132,11 @@ export async function findMediaByPath(
   path: string,
 ): Promise<{ id: number; path: string } | null> {
   const res = await fetch(
-    `${BASE_URL}/api/station/${STATION_ID}/files/list?searchPhrase=${encodeURIComponent(path)}`,
+    `${BASE_URL}/api/station/${STATION_ID}/files/list?currentDirectory=sync&searchPhrase=${encodeURIComponent(path)}`,
     { headers },
   )
   const files = await res.json()
-  return files[0] || null
+  const match = files.find((f: any) => f.media?.id != null)
+  if (match) return { id: match.media.id, path: match.path }
+  return null
 }
