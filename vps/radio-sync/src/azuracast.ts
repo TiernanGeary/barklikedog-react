@@ -207,6 +207,28 @@ export async function emptyPlaylist(playlistId: number) {
   )
 }
 
+export async function getPlaylistMediaIds(playlistId: number): Promise<number[]> {
+  const res = await apiCall(
+    `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/order`,
+    { headers },
+  )
+  const entries: { media_id: number; weight: number }[] = await res.json()
+  // Return in weight order
+  return entries.sort((a, b) => a.weight - b.weight).map((e) => e.media_id)
+}
+
+export async function removeFileFromPlaylist(fileId: number) {
+  // Setting playlists to empty array removes it from all playlists
+  await apiCall(
+    `${BASE_URL}/api/station/${STATION_ID}/file/${fileId}`,
+    {
+      method: 'PUT',
+      headers: jsonHeaders,
+      body: JSON.stringify({ playlists: [] }),
+    },
+  )
+}
+
 export async function clearUpcomingQueue() {
   const res = await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/queue`,

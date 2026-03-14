@@ -8,6 +8,8 @@ import {
   uploadMedia,
   findMediaByPath,
   assignFileToPlaylist,
+  removeFileFromPlaylist,
+  getPlaylistMediaIds,
   setPlaylistSequential,
   setPlaylistLoop,
   emptyPlaylist,
@@ -21,6 +23,7 @@ import {
 const syncedFiles = new Map<string, { id: number; path: string }>()
 
 let currentTracks: RadioQueue['tracks'] = []
+let isFirstSync = true
 
 async function downloadFile(url: string): Promise<Buffer> {
   const res = await fetch(url)
@@ -33,17 +36,12 @@ function sanitizeFilename(title: string, url: string): string {
   return `${clean}-${hash}`
 }
 
-export async function syncQueueToAzuraCast(queue: RadioQueue) {
-  console.log(`[sync] Queue changed — ${queue.tracks.length} tracks`)
-  currentTracks = queue.tracks
-
-  const playlistId = await ensurePlaylist()
-
-  const approved = queue.tracks.filter((t) => t.status === 'approved')
+// Resolve all tracks to AzuraCast media IDs (upload if needed)
+async function resolveMediaIds(tracks: RadioQueue['tracks']): Promise<number[]> {
+  const approved = tracks.filter((t) => t.status === 'approved')
   const mediaIds: number[] = []
 
-  for (let i = 0; i < approved.length; i++) {
-    const track = approved[i]
+  for (const track of approved) {
     if (!track.audioUrl) continue
 
     let azId: number
@@ -77,20 +75,82 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
     mediaIds.push(azId)
   }
 
-  if (mediaIds.length === 0) {
+  return mediaIds
+}
+
+export async function syncQueueToAzuraCast(queue: RadioQueue) {
+  console.log(`[sync] Queue changed — ${queue.tracks.length} tracks`)
+  currentTracks = queue.tracks
+
+  const playlistId = await ensurePlaylist()
+  const desiredIds = await resolveMediaIds(queue.tracks)
+
+  if (desiredIds.length === 0) {
     console.log('[sync] No valid media IDs — skipping playlist update')
     return
   }
 
-  // Clear playlist, then assign only current tracks in insertion order
-  await emptyPlaylist(playlistId)
-  for (const id of mediaIds) {
-    await assignFileToPlaylist(id, playlistId)
+  // Get current playlist state
+  const currentIds = await getPlaylistMediaIds(playlistId)
+
+  const currentSet = new Set(currentIds)
+  const desiredSet = new Set(desiredIds)
+
+  const toAdd = desiredIds.filter((id) => !currentSet.has(id))
+  const toRemove = currentIds.filter((id) => !desiredSet.has(id))
+  const orderChanged = currentIds.length > 0 &&
+    JSON.stringify(currentIds.filter((id) => desiredSet.has(id))) !== JSON.stringify(desiredIds.filter((id) => currentSet.has(id)))
+
+  // First sync or major reorder — full rebuild needed
+  if (isFirstSync || orderChanged) {
+    if (isFirstSync && toAdd.length === 0 && toRemove.length === 0 && !orderChanged) {
+      // Playlist already matches, no rebuild needed
+      console.log(`[sync] Playlist already in sync (${currentIds.length} tracks)`)
+      isFirstSync = false
+      await setPlaylistSequential(playlistId)
+      await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+      return
+    }
+
+    console.log(`[sync] Full rebuild: ${orderChanged ? 'order changed' : 'initial sync'}`)
+    await emptyPlaylist(playlistId)
+    for (const id of desiredIds) {
+      await assignFileToPlaylist(id, playlistId)
+    }
+    await setPlaylistSequential(playlistId)
+    await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+    if (!isFirstSync) {
+      // Only clear queue on rebuilds after initial sync
+      await clearUpcomingQueue()
+    }
+    isFirstSync = false
+    console.log(`[sync] Playlist rebuilt: ${desiredIds.length} tracks (sequential, loop=${queue.loopPlaylist ?? true})`)
+    return
   }
-  await setPlaylistSequential(playlistId)
-  await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
-  await clearUpcomingQueue()
-  console.log(`[sync] Playlist updated: ${mediaIds.length} tracks (sequential, loop=${queue.loopPlaylist ?? true})`)
+
+  // Incremental update — add new tracks, remove deleted ones
+  // This preserves AzuraCast's playback position
+  let changed = false
+
+  for (const id of toRemove) {
+    await removeFileFromPlaylist(id)
+    console.log(`[sync] Removed media ID ${id} from playlist`)
+    changed = true
+  }
+
+  for (const id of toAdd) {
+    await assignFileToPlaylist(id, playlistId)
+    console.log(`[sync] Added media ID ${id} to playlist`)
+    changed = true
+  }
+
+  if (changed) {
+    await setPlaylistSequential(playlistId)
+    await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+    console.log(`[sync] Playlist updated incrementally: +${toAdd.length} -${toRemove.length} (${desiredIds.length} total)`)
+  } else {
+    console.log(`[sync] No changes needed (${desiredIds.length} tracks)`)
+  }
 }
 
 // Settings-only update — no playlist rebuild, no interruption to playback
