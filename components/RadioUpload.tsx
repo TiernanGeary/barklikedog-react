@@ -29,26 +29,7 @@ export default function RadioUpload() {
 
   return (
     <div className="radio-upload">
-      <div className="radio-upload-tabs">
-        <button
-          className={`radio-upload-tab ${tab === 'search' ? 'radio-upload-tab-active' : ''}`}
-          onClick={() => { setTab('search'); setResult(null) }}
-        >
-          Search
-        </button>
-        <button
-          className={`radio-upload-tab ${tab === 'upload' ? 'radio-upload-tab-active' : ''}`}
-          onClick={() => { setTab('upload'); setResult(null) }}
-        >
-          Upload
-        </button>
-      </div>
-
-      {tab === 'search' ? (
-        <SearchTab result={result} setResult={setResult} onTrackAdded={onTrackAdded} />
-      ) : (
-        <UploadTab result={result} setResult={setResult} onTrackAdded={onTrackAdded} />
-      )}
+      <UploadTab result={result} setResult={setResult} onTrackAdded={onTrackAdded} />
     </div>
   )
 }
