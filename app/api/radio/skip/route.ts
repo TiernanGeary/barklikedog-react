@@ -1,18 +1,10 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 
 const AZURACAST_URL = process.env.AZURACAST_URL || 'http://87.99.129.139'
 const AZURACAST_API_KEY = process.env.AZURACAST_API_KEY || ''
 const AZURACAST_STATION_ID = process.env.AZURACAST_STATION_ID || '1'
-const RADIO_ADMIN_KEY = process.env.RADIO_ADMIN_KEY || ''
 
 export async function POST() {
-  // Admin auth check
-  const cookieStore = await cookies()
-  if (!RADIO_ADMIN_KEY || cookieStore.get('radio-admin')?.value !== RADIO_ADMIN_KEY) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   if (!AZURACAST_API_KEY) {
     return NextResponse.json({ error: 'AzuraCast not configured' }, { status: 500 })
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import type { RadioTrack } from '@/lib/types'
 import RadioUpload from './RadioUpload'
 
@@ -18,43 +18,6 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
   const [volume, setVolume] = useState(0.8)
   const [muted, setMuted] = useState(false)
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1)
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [localUploadsEnabled, setLocalUploadsEnabled] = useState(uploadsEnabled)
-
-  // Sync uploadsEnabled prop from Sanity Live
-  useEffect(() => {
-    setLocalUploadsEnabled(uploadsEnabled)
-  }, [uploadsEnabled])
-
-  // Check admin status on mount + handle ?admin=<key> URL param
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const adminKey = params.get('admin')
-
-    if (adminKey) {
-      // Set admin cookie via API
-      fetch('/api/radio/admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: adminKey }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.isAdmin) {
-            setIsAdmin(true)
-            // Clean URL
-            window.history.replaceState({}, '', window.location.pathname)
-          }
-        })
-        .catch(() => {})
-    } else {
-      // Check existing cookie
-      fetch('/api/radio/admin')
-        .then((res) => res.json())
-        .then((data) => setIsAdmin(data.isAdmin))
-        .catch(() => {})
-    }
-  }, [])
 
   // Subscribe to AzuraCast SSE for now-playing
   useEffect(() => {
@@ -102,7 +65,6 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
 
       es.onerror = () => {
         es?.close()
-        // Reconnect after 5s
         reconnectTimer = setTimeout(connect, 5000)
       }
     }
@@ -147,40 +109,6 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
     setMuted(!muted)
   }
 
-  const handleSkip = useCallback(async () => {
-    try {
-      await fetch('/api/radio/skip', { method: 'POST' })
-    } catch {
-      // Skip failed silently
-    }
-  }, [])
-
-  const handleRemove = useCallback(async (trackKey: string) => {
-    try {
-      await fetch('/api/radio/remove', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trackKey }),
-      })
-    } catch {
-      // Remove failed silently
-    }
-  }, [])
-
-  const handleToggleUploads = useCallback(async () => {
-    const newVal = !localUploadsEnabled
-    setLocalUploadsEnabled(newVal)
-    try {
-      await fetch('/api/radio/toggle-uploads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: newVal }),
-      })
-    } catch {
-      setLocalUploadsEnabled(!newVal) // revert on error
-    }
-  }, [localUploadsEnabled])
-
   return (
     <div className="radio-page">
       <style>{styles}</style>
@@ -223,12 +151,6 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
           >
             {isPlaying ? 'TUNE OUT' : 'TUNE IN'}
           </button>
-
-          {isAdmin && (
-            <button className="radio-admin-btn" onClick={handleSkip}>
-              SKIP
-            </button>
-          )}
 
           <div className="radio-volume">
             <button
@@ -279,15 +201,6 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
                     {track.status === 'pending' && (
                       <span className="radio-track-pending">PENDING</span>
                     )}
-                    {isAdmin && !isCurrentTrack && track._key && (
-                      <button
-                        className="radio-remove-btn"
-                        onClick={() => handleRemove(track._key)}
-                        title="Remove from queue"
-                      >
-                        ✕
-                      </button>
-                    )}
                   </li>
                 )
               })}
@@ -295,21 +208,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
           </div>
         )}
 
-        {/* Admin upload toggle */}
-        {isAdmin && (
-          <div className="radio-admin-toggle">
-            <label className="radio-toggle-label">
-              <input
-                type="checkbox"
-                checked={localUploadsEnabled}
-                onChange={handleToggleUploads}
-              />
-              Listener uploads {localUploadsEnabled ? 'enabled' : 'disabled'}
-            </label>
-          </div>
-        )}
-
-        {localUploadsEnabled && <RadioUpload />}
+        {uploadsEnabled && <RadioUpload />}
       </div>
     </div>
   )
@@ -391,22 +290,6 @@ const styles = `
 .radio-play-btn:hover {
   background-color: #0059e7;
   color: #ffffff;
-}
-
-.radio-admin-btn {
-  background-color: #ff3700;
-  color: #ffffff;
-  border: 0.5px solid transparent;
-  cursor: pointer;
-  padding: 6px 6px;
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  font-weight: bold;
-  transition: all 0.2s ease;
-}
-
-.radio-admin-btn:hover {
-  background-color: #cc2c00;
 }
 
 .radio-volume {
@@ -529,43 +412,6 @@ const styles = `
   padding: 1px 6px;
 }
 
-.radio-remove-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #cd2f2f;
-  font-size: 12px;
-  padding: 2px 6px;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.radio-track:hover .radio-remove-btn {
-  opacity: 0.6;
-}
-
-.radio-remove-btn:hover {
-  opacity: 1 !important;
-}
-
-.radio-admin-toggle {
-  margin-top: 16px;
-  margin-bottom: 8px;
-}
-
-.radio-toggle-label {
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  opacity: 0.7;
-}
-
-.radio-toggle-label input {
-  cursor: pointer;
-}
-
 @media (max-width: 768px) {
   .radio-page {
     padding: 20px 15px;
@@ -666,90 +512,5 @@ const styles = `
   font-size: 11px;
   color: #cd2f2f;
   margin-top: 8px;
-}
-
-.radio-upload-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 12px;
-}
-
-.radio-upload-tab {
-  background: none;
-  border: 1px solid #e0e0e0;
-  cursor: pointer;
-  padding: 5px 14px;
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  font-weight: bold;
-  letter-spacing: 0.05em;
-  color: #999;
-  transition: all 0.15s;
-}
-
-.radio-upload-tab:first-child {
-  border-right: none;
-}
-
-.radio-upload-tab-active {
-  color: #333;
-  background: #f5f5f5;
-  border-color: #333;
-}
-
-.radio-search-form {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.radio-search-form .radio-upload-title {
-  flex: 1;
-}
-
-.radio-search-results {
-  list-style: none;
-  padding: 0;
-  margin: 12px 0 0;
-}
-
-.radio-search-result {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.radio-search-result:last-child {
-  border-bottom: none;
-}
-
-.radio-search-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-
-.radio-search-title {
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.radio-search-meta {
-  font-size: 10px;
-  opacity: 0.5;
-}
-
-.radio-search-limit {
-  font-size: 9px;
-  color: #cd2f2f;
-  white-space: nowrap;
-  letter-spacing: 0.05em;
 }
 `
