@@ -17,14 +17,12 @@ export interface QueueTrack {
 
 export interface RadioQueue {
   _id: string
-  currentTrackIndex: number
   loopPlaylist: boolean
   tracks: QueueTrack[]
 }
 
 const QUEUE_QUERY = `*[_type == "radioQueue"][0] {
   _id,
-  currentTrackIndex,
   loopPlaylist,
   tracks[] {
     _key,
@@ -38,10 +36,6 @@ export async function fetchQueue(): Promise<RadioQueue | null> {
   return sanityClient.fetch(QUEUE_QUERY)
 }
 
-// FIX 2: Only fire callback when the tracks array actually changes.
-// Previously, ANY mutation on radioQueue (including currentTrackIndex writes
-// from pollNowPlaying) would trigger syncQueueToAzuraCast, creating an
-// infinite loop: poll writes index → listener fires → sync runs → repeat.
 let lastTrackKeys = ''
 
 export function listenToQueue(callback: (queue: RadioQueue) => void) {
@@ -60,18 +54,4 @@ export function listenToQueue(callback: (queue: RadioQueue) => void) {
     })
 
   return subscription
-}
-
-export async function updateNowPlaying(
-  queueId: string,
-  trackIndex: number,
-  startedAt: string,
-) {
-  await sanityClient
-    .patch(queueId)
-    .set({
-      currentTrackIndex: trackIndex,
-      currentTrackStartedAt: startedAt,
-    })
-    .commit()
 }

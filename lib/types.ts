@@ -70,6 +70,7 @@ export interface Page {
 }
 
 export interface RadioTrack {
+  _key: string
   title: string
   label?: string
   audioUrl: string
@@ -81,13 +82,12 @@ export interface RadioTrack {
 export interface RadioQueue {
   tracks: RadioTrack[]
   loopPlaylist: boolean
-  currentTrackIndex: number
-  currentTrackStartedAt?: string
 }
 
 export interface RadioSettings {
   moderationEnabled: boolean
   maxUploadSizeMB: number
+  uploadsEnabled: boolean
 }
 
 export interface YouTubeResult {

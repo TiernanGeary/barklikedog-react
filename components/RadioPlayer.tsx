@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import type { RadioTrack } from '@/lib/types'
 import RadioUpload from './RadioUpload'
 
@@ -8,17 +8,121 @@ const STREAM_URL = process.env.NEXT_PUBLIC_RADIO_STREAM_URL || ''
 
 interface Props {
   tracks: RadioTrack[]
-  currentTrackIndex: number
+  uploadsEnabled: boolean
+  azuracastBaseUrl: string
 }
 
-export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
+export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
   const [muted, setMuted] = useState(false)
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(-1)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [localUploadsEnabled, setLocalUploadsEnabled] = useState(uploadsEnabled)
 
-  const activeTrack = tracks[currentTrackIndex]
-  const nowPlaying = activeTrack?.label || activeTrack?.title || ''
+  // Sync uploadsEnabled prop from Sanity Live
+  useEffect(() => {
+    setLocalUploadsEnabled(uploadsEnabled)
+  }, [uploadsEnabled])
+
+  // Check admin status on mount + handle ?admin=<key> URL param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const adminKey = params.get('admin')
+
+    if (adminKey) {
+      // Set admin cookie via API
+      fetch('/api/radio/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: adminKey }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.isAdmin) {
+            setIsAdmin(true)
+            // Clean URL
+            window.history.replaceState({}, '', window.location.pathname)
+          }
+        })
+        .catch(() => {})
+    } else {
+      // Check existing cookie
+      fetch('/api/radio/admin')
+        .then((res) => res.json())
+        .then((data) => setIsAdmin(data.isAdmin))
+        .catch(() => {})
+    }
+  }, [])
+
+  // Subscribe to AzuraCast SSE for now-playing
+  useEffect(() => {
+    if (!azuracastBaseUrl) return
+
+    const sseUrl = `${azuracastBaseUrl}/api/live/nowplaying/sse?cf_connect=${encodeURIComponent(JSON.stringify({ subs: { 'station:1': { recover: true } } }))}`
+
+    let es: EventSource | null = null
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+
+    function connect() {
+      es = new EventSource(sseUrl)
+
+      es.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          const np = data?.pub?.data?.np
+          if (!np) return
+
+          const songTitle = np.now_playing?.song?.title
+          if (!songTitle) return
+
+          // Match song title to queue track
+          const idx = tracks.findIndex(
+            (t) => t.title === songTitle || t.title?.includes(songTitle) || songTitle.includes(t.title),
+          )
+
+          if (idx >= 0) {
+            setCurrentTrackIndex((prev) => {
+              if (prev !== idx) {
+                // Track changed — reload audio to reconnect to live edge
+                const audio = document.querySelector('audio') as HTMLAudioElement | null
+                if (audio && !audio.paused) {
+                  audio.load()
+                  audio.play().catch(() => {})
+                }
+              }
+              return idx
+            })
+          }
+        } catch {
+          // Non-JSON keepalive — ignore
+        }
+      }
+
+      es.onerror = () => {
+        es?.close()
+        // Reconnect after 5s
+        reconnectTimer = setTimeout(connect, 5000)
+      }
+    }
+
+    connect()
+
+    return () => {
+      es?.close()
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+    }
+  }, [azuracastBaseUrl, tracks])
+
+  const nowPlaying = currentTrackIndex >= 0
+    ? tracks[currentTrackIndex]?.label || tracks[currentTrackIndex]?.title || ''
+    : ''
+
+  // Queue display: current track at top, only show from current onward
+  const visibleTracks = currentTrackIndex >= 0
+    ? tracks.slice(currentTrackIndex)
+    : tracks
 
   function togglePlay() {
     const audio = audioRef.current
@@ -42,6 +146,40 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
     if (audioRef.current) audioRef.current.muted = !muted
     setMuted(!muted)
   }
+
+  const handleSkip = useCallback(async () => {
+    try {
+      await fetch('/api/radio/skip', { method: 'POST' })
+    } catch {
+      // Skip failed silently
+    }
+  }, [])
+
+  const handleRemove = useCallback(async (trackKey: string) => {
+    try {
+      await fetch('/api/radio/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trackKey }),
+      })
+    } catch {
+      // Remove failed silently
+    }
+  }, [])
+
+  const handleToggleUploads = useCallback(async () => {
+    const newVal = !localUploadsEnabled
+    setLocalUploadsEnabled(newVal)
+    try {
+      await fetch('/api/radio/toggle-uploads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: newVal }),
+      })
+    } catch {
+      setLocalUploadsEnabled(!newVal) // revert on error
+    }
+  }, [localUploadsEnabled])
 
   return (
     <div className="radio-page">
@@ -86,6 +224,12 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
             {isPlaying ? 'TUNE OUT' : 'TUNE IN'}
           </button>
 
+          {isAdmin && (
+            <button className="radio-admin-btn" onClick={handleSkip}>
+              SKIP
+            </button>
+          )}
+
           <div className="radio-volume">
             <button
               className="radio-vol-btn"
@@ -110,32 +254,62 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
           </div>
         </div>
 
-        {tracks.length > 0 && (
+        {visibleTracks.length > 0 && (
           <div className="radio-tracklist">
-            <div className="radio-tracklist-header">QUEUE</div>
+            <div className="radio-tracklist-header">
+              {currentTrackIndex >= 0 ? 'NOW PLAYING' : 'QUEUE'}
+            </div>
             <ul>
-              {tracks.map((track, i) => (
-                <li
-                  key={i}
-                  className={i === currentTrackIndex ? 'radio-track radio-track-active' : 'radio-track'}
-                >
-                  <span className="radio-track-num">{String(i + 1).padStart(2, '0')}</span>
-                  <span className="radio-track-title">{track.label || track.title}</span>
-                  {track.duration != null && track.duration > 0 && (
-                    <span className="radio-track-duration">
-                      {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
+              {visibleTracks.map((track, i) => {
+                const isCurrentTrack = i === 0 && currentTrackIndex >= 0
+                return (
+                  <li
+                    key={track._key || i}
+                    className={isCurrentTrack ? 'radio-track radio-track-active' : 'radio-track'}
+                  >
+                    <span className="radio-track-num">
+                      {isCurrentTrack ? '▶' : String(i).padStart(2, '0')}
                     </span>
-                  )}
-                  {track.status === 'pending' && (
-                    <span className="radio-track-pending">PENDING</span>
-                  )}
-                </li>
-              ))}
+                    <span className="radio-track-title">{track.label || track.title}</span>
+                    {track.duration != null && track.duration > 0 && (
+                      <span className="radio-track-duration">
+                        {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
+                      </span>
+                    )}
+                    {track.status === 'pending' && (
+                      <span className="radio-track-pending">PENDING</span>
+                    )}
+                    {isAdmin && !isCurrentTrack && track._key && (
+                      <button
+                        className="radio-remove-btn"
+                        onClick={() => handleRemove(track._key)}
+                        title="Remove from queue"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}
 
-        <RadioUpload />
+        {/* Admin upload toggle */}
+        {isAdmin && (
+          <div className="radio-admin-toggle">
+            <label className="radio-toggle-label">
+              <input
+                type="checkbox"
+                checked={localUploadsEnabled}
+                onChange={handleToggleUploads}
+              />
+              Listener uploads {localUploadsEnabled ? 'enabled' : 'disabled'}
+            </label>
+          </div>
+        )}
+
+        {localUploadsEnabled && <RadioUpload />}
       </div>
     </div>
   )
@@ -219,6 +393,21 @@ const styles = `
   color: #ffffff;
 }
 
+.radio-admin-btn {
+  background-color: #ff3700;
+  color: #ffffff;
+  border: 0.5px solid transparent;
+  cursor: pointer;
+  padding: 6px 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.radio-admin-btn:hover {
+  background-color: #cc2c00;
+}
 
 .radio-volume {
   display: flex;
@@ -323,6 +512,58 @@ const styles = `
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+}
+
+.radio-track-duration {
+  font-size: 10px;
+  opacity: 0.4;
+  font-variant-numeric: tabular-nums;
+}
+
+.radio-track-pending {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #ff8c00;
+  border: 1px solid #ff8c00;
+  padding: 1px 6px;
+}
+
+.radio-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #cd2f2f;
+  font-size: 12px;
+  padding: 2px 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.radio-track:hover .radio-remove-btn {
+  opacity: 0.6;
+}
+
+.radio-remove-btn:hover {
+  opacity: 1 !important;
+}
+
+.radio-admin-toggle {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.radio-toggle-label {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.radio-toggle-label input {
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {
@@ -333,22 +574,6 @@ const styles = `
   .radio-tracklist {
     max-width: 100%;
   }
-}
-
-.radio-track-duration {
-  font-size: 10px;
-  opacity: 0.4;
-  margin-left: auto;
-  font-variant-numeric: tabular-nums;
-}
-
-.radio-track-pending {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  color: #ff8c00;
-  border: 1px solid #ff8c00;
-  padding: 1px 6px;
-  margin-left: auto;
 }
 
 .radio-upload {

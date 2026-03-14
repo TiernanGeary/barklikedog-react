@@ -7,9 +7,8 @@ export const metadata = {
 
 const RADIO_QUEUE_QUERY = `*[_type == "radioQueue"][0] {
   loopPlaylist,
-  currentTrackIndex,
-  currentTrackStartedAt,
   tracks[] {
+    _key,
     label,
     "title": trackRef->title,
     "audioUrl": trackRef->audioFile.asset->url,
@@ -19,13 +18,21 @@ const RADIO_QUEUE_QUERY = `*[_type == "radioQueue"][0] {
   }
 }`
 
+const RADIO_SETTINGS_QUERY = `*[_type == "radioSettings"][0] {
+  uploadsEnabled
+}`
+
 export default async function RadioPage() {
-  const { data: queue } = await sanityFetch({ query: RADIO_QUEUE_QUERY })
+  const [{ data: queue }, { data: settings }] = await Promise.all([
+    sanityFetch({ query: RADIO_QUEUE_QUERY }),
+    sanityFetch({ query: RADIO_SETTINGS_QUERY }),
+  ])
 
   return (
     <RadioPlayer
       tracks={queue?.tracks ?? []}
-      currentTrackIndex={queue?.currentTrackIndex ?? 0}
+      uploadsEnabled={settings?.uploadsEnabled ?? true}
+      azuracastBaseUrl={process.env.NEXT_PUBLIC_AZURACAST_SSE_URL || 'https://radio.barklike.dog'}
     />
   )
 }
