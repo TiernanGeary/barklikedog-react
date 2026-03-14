@@ -1,0 +1,16 @@
+[Unit]
+Description=Upload Server (yt-dlp extract + file upload proxy)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/upload-server
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/upload-server/.env
+
+[Install]
+WantedBy=multi-user.target
