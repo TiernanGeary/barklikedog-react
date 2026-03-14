@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from 'next-sanity'
 
-const client = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
-  apiVersion: process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2026-03-10',
-  useCdn: false,
-  token: process.env.SANITY_API_TOKEN,
-})
+// Use Edge Runtime for larger body size support (no 4.5MB limit)
+export const runtime = 'edge'
+
+const SANITY_PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!
+const SANITY_DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET!
+const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN!
+const SANITY_API_VERSION = process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2026-03-10'
 
 // Simple in-memory rate limiter: IP -> array of timestamps
 const uploadTimestamps = new Map<string, number[]>()
@@ -50,84 +49,152 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { title, assetId, filename, fileSize, mimeType } = await request.json()
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
+    const title = formData.get('title') as string | null
 
-    if (!title || !assetId) {
+    if (!file || !title) {
       return NextResponse.json(
-        { error: 'Missing required fields: title and assetId' },
+        { error: 'Missing required fields: file and title' },
         { status: 400 },
       )
     }
 
     // Validate mime type
-    if (mimeType && !ALLOWED_TYPES.includes(mimeType)) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
         { error: 'Invalid file type. Accepted: MP3, M4A, OGG, WAV, FLAC, AAC, WebM.' },
         { status: 400 },
       )
     }
 
-    // Fetch radioSettings for maxUploadSizeMB
-    const settings = await client.fetch<{
-      moderationEnabled?: boolean
-      maxUploadSizeMB?: number
-    } | null>('*[_type == "radioSettings"][0]{ moderationEnabled, maxUploadSizeMB }')
+    // Fetch radioSettings for maxUploadSizeMB and moderationEnabled
+    const settingsRes = await fetch(
+      `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}?query=${encodeURIComponent('*[_type == "radioSettings"][0]{ moderationEnabled, maxUploadSizeMB }')}`,
+      { headers: { Authorization: `Bearer ${SANITY_API_TOKEN}` } },
+    )
+    const settingsData = await settingsRes.json()
+    const settings = settingsData.result
 
     const maxUploadSizeMB = settings?.maxUploadSizeMB ?? 50
     const maxBytes = maxUploadSizeMB * 1024 * 1024
 
-    if (fileSize && fileSize > maxBytes) {
+    if (file.size > maxBytes) {
       return NextResponse.json(
         { error: `File too large. Maximum size is ${maxUploadSizeMB}MB.` },
         { status: 400 },
       )
     }
 
-    // Create media document using the already-uploaded asset
+    // Upload file to Sanity CDN
+    const uploadRes = await fetch(
+      `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/assets/files/${SANITY_DATASET}?filename=${encodeURIComponent(file.name)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type,
+          Authorization: `Bearer ${SANITY_API_TOKEN}`,
+        },
+        body: file,
+      },
+    )
+
+    if (!uploadRes.ok) {
+      const err = await uploadRes.text()
+      console.error('Sanity upload failed:', err)
+      return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
+    }
+
+    const uploadData = await uploadRes.json()
+    const assetId = uploadData.document._id
+
+    // Create media document
     const status = settings?.moderationEnabled ? 'pending' : 'approved'
-    const mediaDoc = await client.create({
-      _type: 'media',
-      title,
-      slug: {
-        _type: 'slug',
-        current: title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, ''),
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+
+    const mutations = [
+      {
+        create: {
+          _type: 'media',
+          title,
+          slug: { _type: 'slug', current: slug },
+          mediaType: 'audio',
+          audioFile: {
+            _type: 'file',
+            asset: { _type: 'reference', _ref: assetId },
+          },
+          uploadedBy: 'listener',
+          status,
+          publishedAt: new Date().toISOString(),
+        },
       },
-      mediaType: 'audio',
-      audioFile: {
-        _type: 'file',
-        asset: { _type: 'reference', _ref: assetId },
+    ]
+
+    const mutateRes = await fetch(
+      `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/mutate/${SANITY_DATASET}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SANITY_API_TOKEN}`,
+        },
+        body: JSON.stringify({ mutations }),
       },
-      uploadedBy: 'listener',
-      status,
-      publishedAt: new Date().toISOString(),
-    })
+    )
+
+    const mutateData = await mutateRes.json()
+    const mediaDocId = mutateData.results?.[0]?.id
 
     // If approved, append to radioQueue
-    if (status === 'approved') {
-      const queue = await client.fetch<{ _id: string } | null>(
-        '*[_type == "radioQueue"][0]{ _id }',
+    if (status === 'approved' && mediaDocId) {
+      const queueRes = await fetch(
+        `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}?query=${encodeURIComponent('*[_type == "radioQueue"][0]{ _id }')}`,
+        { headers: { Authorization: `Bearer ${SANITY_API_TOKEN}` } },
       )
-      if (queue) {
-        await client
-          .patch(queue._id)
-          .setIfMissing({ tracks: [] })
-          .append('tracks', [
-            {
-              _key: crypto.randomUUID().replace(/-/g, '').slice(0, 12),
-              _type: 'queuedTrack',
-              trackRef: { _type: 'reference', _ref: mediaDoc._id },
+      const queueData = await queueRes.json()
+      const queueId = queueData.result?._id
+
+      if (queueId) {
+        const key = crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+        await fetch(
+          `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/mutate/${SANITY_DATASET}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${SANITY_API_TOKEN}`,
             },
-          ])
-          .commit()
+            body: JSON.stringify({
+              mutations: [
+                {
+                  patch: {
+                    id: queueId,
+                    setIfMissing: { tracks: [] },
+                    insert: {
+                      after: 'tracks[-1]',
+                      items: [
+                        {
+                          _key: key,
+                          _type: 'queuedTrack',
+                          trackRef: { _type: 'reference', _ref: mediaDocId },
+                        },
+                      ],
+                    },
+                  },
+                },
+              ],
+            }),
+          },
+        )
       }
     }
 
     return NextResponse.json({
       success: true,
-      status: mediaDoc.status,
+      status,
       title,
     })
   } catch (err) {
