@@ -174,7 +174,7 @@ function SearchTab({
                   disabled={!!extractingId}
                   onClick={() => handleAdd(r)}
                 >
-                  {extractingId === r.videoId ? 'Extracting...' : 'Add'}
+                  {extractingId === r.videoId ? 'Adding...' : 'Add'}
                 </button>
               )}
             </li>

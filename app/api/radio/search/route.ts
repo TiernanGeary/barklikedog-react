@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     searchUrl.searchParams.set('part', 'snippet')
     searchUrl.searchParams.set('type', 'video')
     searchUrl.searchParams.set('videoCategoryId', '10')
-    searchUrl.searchParams.set('maxResults', '6')
+    searchUrl.searchParams.set('maxResults', '5')
     searchUrl.searchParams.set('q', q)
     searchUrl.searchParams.set('key', GOOGLE_API_KEY)
 
