@@ -207,9 +207,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
                     key={track._key || `up-${i}`}
                     className={isCurrentTrack ? 'radio-track radio-track-active' : 'radio-track'}
                   >
-                    <span className="radio-track-num">
-                      {isCurrentTrack ? '▶' : ''}
-                    </span>
+                    {isCurrentTrack && <span className="radio-track-num">▶</span>}
                     <span className="radio-track-title">{track.label || track.title}</span>
                     {track.duration != null && track.duration > 0 && (
                       <span className="radio-track-duration">
@@ -219,12 +217,8 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
                   </li>
                 )
               })}
-              {playedTracks.length > 0 && (
-                <li className="radio-track-divider">PLAYED</li>
-              )}
               {playedTracks.map((track, i) => (
                 <li key={track._key || `played-${i}`} className="radio-track radio-track-played">
-                  <span className="radio-track-num" />
                   <span className="radio-track-title">{track.label || track.title}</span>
                   {track.duration != null && track.duration > 0 && (
                     <span className="radio-track-duration">
@@ -435,14 +429,6 @@ const styles = `
 
 .radio-track-played {
   opacity: 0.3 !important;
-}
-
-.radio-track-divider {
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  opacity: 0.3;
-  padding: 10px 0 4px;
-  list-style: none;
 }
 
 @media (max-width: 768px) {
