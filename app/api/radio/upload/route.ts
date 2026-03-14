@@ -68,14 +68,16 @@ export async function POST(request: NextRequest) {
     const status = settings?.moderationEnabled ? 'pending' : 'approved'
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
-    // Create media document
+    // Create media document (explicit ID ensures it's published, not a draft)
+    const mediaDocId = crypto.randomUUID().replace(/-/g, '').slice(0, 24)
     const createRes = await fetch(mutateUrl, {
       method: 'POST',
       headers: mutateHeaders,
       cache: 'no-store',
       body: JSON.stringify({
         mutations: [{
-          create: {
+          createIfNotExists: {
+            _id: mediaDocId,
             _type: 'media',
             title,
             slug: { _type: 'slug', current: slug },
@@ -91,11 +93,14 @@ export async function POST(request: NextRequest) {
       }),
     })
 
-    const createData = await createRes.json()
-    const mediaDocId = createData.results?.[0]?.id
+    if (!createRes.ok) {
+      const errData = await createRes.json().catch(() => ({}))
+      console.error('Media create failed:', JSON.stringify(errData))
+      return NextResponse.json({ error: 'Failed to create media document' }, { status: 500 })
+    }
 
     // If approved, append to radioQueue with single atomic mutation
-    if (status === 'approved' && mediaDocId) {
+    if (status === 'approved') {
       const key = crypto.randomUUID().replace(/-/g, '').slice(0, 12)
       const trackItem = {
         _key: key,
