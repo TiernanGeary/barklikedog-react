@@ -54,10 +54,11 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
       const filename = sanitizeFilename(track.title, track.audioUrl)
       const searchPath = `sync/${filename}`
 
-      const existing = await findMediaByPath(searchPath)
+      const existing = await findMediaByPath(filename)
       if (existing) {
         azId = existing.id
         syncedFiles.set(track.audioUrl, { id: azId, path: existing.path })
+        console.log(`[sync] Found existing: "${track.title}" → AzuraCast ID ${azId}`)
       } else {
         console.log(`[sync] Downloading: ${track.title}`)
         const buffer = await downloadFile(track.audioUrl)
@@ -68,16 +69,24 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
       }
     }
 
+    if (!azId || azId <= 0) {
+      console.warn(`[sync] Skipping track "${track.title}" — invalid AzuraCast media ID: ${azId}`)
+      continue
+    }
     mediaIds.push(azId)
   }
 
-  // Clear playlist, then assign only current tracks in order
+  if (mediaIds.length === 0) {
+    console.log('[sync] No valid media IDs — skipping playlist update')
+    return
+  }
+
+  // Clear playlist, then assign only current tracks in insertion order
   await emptyPlaylist(playlistId)
   for (const id of mediaIds) {
     await assignFileToPlaylist(id, playlistId)
   }
   await setPlaylistSequential(playlistId)
-  await setPlaylistOrder(playlistId, mediaIds)
   console.log(`[sync] Playlist updated: ${mediaIds.length} tracks (sequential)`)
 }
 

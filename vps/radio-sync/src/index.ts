@@ -8,7 +8,11 @@ async function main() {
   // Initial sync
   const queue = await fetchQueue()
   if (queue) {
-    await syncQueueToAzuraCast(queue)
+    try {
+      await syncQueueToAzuraCast(queue)
+    } catch (err) {
+      console.error('[radio-sync] Initial sync error (continuing):', err)
+    }
   } else {
     console.log('[radio-sync] No queue found — waiting for changes')
   }

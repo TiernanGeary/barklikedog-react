@@ -29,12 +29,41 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1)
   const [expandedTrack, setExpandedTrack] = useState<string | null>(null)
 
+  // Normalize for fuzzy matching: lowercase, strip punctuation/hashes, collapse whitespace
+  function normalize(s: string): string {
+    return s
+      .toLowerCase()
+      .replace(/-[a-f0-9]{20,}$/i, '') // strip trailing file hash
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
   // Match a song title from AzuraCast to a track index in the queue
   function matchTrack(songTitle: string): number {
     if (!songTitle) return -1
-    // Try exact match first, then substring
+    const norm = normalize(songTitle)
+    // Try exact match first
     let idx = tracks.findIndex((t) => t.title === songTitle)
-    if (idx < 0) idx = tracks.findIndex((t) => t.title && (t.title.includes(songTitle) || songTitle.includes(t.title)))
+    if (idx >= 0) return idx
+    // Try substring match
+    idx = tracks.findIndex((t) => t.title && (t.title.includes(songTitle) || songTitle.includes(t.title)))
+    if (idx >= 0) return idx
+    // Fuzzy: normalized substring match
+    idx = tracks.findIndex((t) => {
+      if (!t.title) return false
+      const nt = normalize(t.title)
+      return nt.includes(norm) || norm.includes(nt)
+    })
+    if (idx >= 0) return idx
+    // Fuzzy: check if significant words overlap
+    const normWords = norm.split(' ').filter((w) => w.length > 2)
+    idx = tracks.findIndex((t) => {
+      if (!t.title) return false
+      const nt = normalize(t.title)
+      const matchCount = normWords.filter((w) => nt.includes(w)).length
+      return matchCount >= Math.max(1, normWords.length * 0.5)
+    })
     return idx
   }
 

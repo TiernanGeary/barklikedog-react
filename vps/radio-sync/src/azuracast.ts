@@ -123,14 +123,36 @@ export async function setPlaylistOrder(
   playlistId: number,
   mediaIds: number[],
 ) {
+  // Fetch current playlist entries to get spm_ids (playlist_media join IDs)
+  const res = await apiCall(
+    `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/order`,
+    { headers },
+  )
+  const entries: { id: number; media_id: number }[] = await res.json()
+
+  // Build a map: media_id → spm_id
+  const mediaToSpm = new Map<number, number>()
+  for (const entry of entries) {
+    mediaToSpm.set(entry.media_id, entry.id)
+  }
+
+  // Order by our desired mediaIds sequence, using spm_ids
+  const order = mediaIds
+    .map((mediaId, i) => {
+      const spmId = mediaToSpm.get(mediaId)
+      if (!spmId) return null
+      return { id: spmId, weight: i + 1 }
+    })
+    .filter(Boolean)
+
+  if (order.length === 0) return
+
   await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/order`,
     {
       method: 'PUT',
       headers: jsonHeaders,
-      body: JSON.stringify({
-        order: mediaIds.map((id, i) => ({ id, weight: i + 1 })),
-      }),
+      body: JSON.stringify({ order }),
     },
   )
 }
@@ -168,14 +190,15 @@ export async function emptyPlaylist(playlistId: number) {
 }
 
 export async function findMediaByPath(
-  path: string,
+  filename: string,
 ): Promise<{ id: number; path: string } | null> {
   const res = await apiCall(
-    `${BASE_URL}/api/station/${STATION_ID}/files/list?currentDirectory=sync&searchPhrase=${encodeURIComponent(path)}`,
+    `${BASE_URL}/api/station/${STATION_ID}/files/list?currentDirectory=sync&searchPhrase=${encodeURIComponent(filename)}`,
     { headers },
   )
   const files = await res.json()
-  const match = files.find((f: any) => f.media?.id != null)
+  // Match on filename substring to handle hash differences
+  const match = files.find((f: any) => f.media?.id != null && f.media.id > 0)
   if (match) return { id: match.media.id, path: match.path }
   return null
 }
