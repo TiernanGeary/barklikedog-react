@@ -124,6 +124,11 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
                 >
                   <span className="radio-track-num">{String(i + 1).padStart(2, '0')}</span>
                   <span className="radio-track-title">{track.label || track.title}</span>
+                  {track.duration != null && track.duration > 0 && (
+                    <span className="radio-track-duration">
+                      {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
+                    </span>
+                  )}
                   {track.status === 'pending' && (
                     <span className="radio-track-pending">PENDING</span>
                   )}
@@ -357,6 +362,13 @@ const styles = `
   .radio-tracklist {
     max-width: 100%;
   }
+}
+
+.radio-track-duration {
+  font-size: 10px;
+  opacity: 0.4;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .radio-track-pending {

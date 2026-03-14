@@ -88,6 +88,13 @@ export const media = defineType({
       initialValue: 'admin',
     }),
     defineField({
+      name: 'duration',
+      title: 'Duration (seconds)',
+      type: 'number',
+      readOnly: true,
+      description: 'Auto-populated by the sync service',
+    }),
+    defineField({
       name: 'status',
       title: 'Status',
       type: 'string',

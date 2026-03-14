@@ -14,7 +14,8 @@ const RADIO_QUEUE_QUERY = `*[_type == "radioQueue"][0] {
     "title": trackRef->title,
     "audioUrl": trackRef->audioFile.asset->url,
     "coverArt": trackRef->featuredImage.asset->url,
-    "status": trackRef->status
+    "status": trackRef->status,
+    "duration": trackRef->duration
   }
 }`
 

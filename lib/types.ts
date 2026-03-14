@@ -75,6 +75,7 @@ export interface RadioTrack {
   audioUrl: string
   coverArt?: string
   status?: 'approved' | 'pending' | 'rejected'
+  duration?: number
 }
 
 export interface RadioQueue {
