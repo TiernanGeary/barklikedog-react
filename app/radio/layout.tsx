@@ -2,7 +2,7 @@ export default function RadioLayout({ children }: { children: React.ReactNode })
   return (
     <>
       <style>{`
-        #sidebar, #footer { display: none !important; }
+        #sidebar { display: none !important; }
         #main-content {
           margin-left: 0 !important;
           padding: 0 !important;

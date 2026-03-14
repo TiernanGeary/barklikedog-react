@@ -277,10 +277,6 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
 const styles = `
 .radio-page {
   padding: 20px 30px;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -301,10 +297,6 @@ const styles = `
 
 .radio-controls-area {
   color: #333333;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
 }
 
 .radio-now-playing {
@@ -415,8 +407,7 @@ const styles = `
   display: flex;
   gap: 20px;
   align-items: stretch;
-  flex: 1;
-  min-height: 0;
+  height: 320px;
 }
 
 .radio-left {
@@ -510,8 +501,6 @@ const styles = `
 @media (max-width: 768px) {
   .radio-page {
     padding: 15px;
-    height: auto;
-    overflow: auto;
   }
 
   .radio-video-wrap {
@@ -520,10 +509,15 @@ const styles = `
 
   .radio-bottom {
     flex-direction: column;
+    height: auto;
   }
 
   .radio-left {
     width: 100%;
+  }
+
+  .radio-tracklist {
+    max-height: 250px;
   }
 
   .radio-chat {
@@ -537,7 +531,6 @@ const styles = `
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  min-height: 0;
   border: 1px solid #e0e0e0;
 }
 
