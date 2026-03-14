@@ -18,6 +18,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
   const [volume, setVolume] = useState(0.8)
   const [muted, setMuted] = useState(false)
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1)
+  const [expandedTrack, setExpandedTrack] = useState<string | null>(null)
 
   // Match a song title from AzuraCast to a track index in the queue
   function matchTrack(songTitle: string): number {
@@ -202,31 +203,52 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
             <ul>
               {upcomingTracks.map((track, i) => {
                 const isCurrentTrack = i === 0 && currentTrackIndex >= 0
+                const key = track._key || `up-${i}`
+                const isExpanded = expandedTrack === key
                 return (
-                  <li
-                    key={track._key || `up-${i}`}
-                    className={isCurrentTrack ? 'radio-track radio-track-active' : 'radio-track'}
-                  >
-                    {isCurrentTrack && <span className="radio-track-num">▶</span>}
-                    <span className="radio-track-title">{track.label || track.title}</span>
-                    {track.duration != null && track.duration > 0 && (
-                      <span className="radio-track-duration">
-                        {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
-                      </span>
+                  <li key={key} className={isCurrentTrack ? 'radio-track-wrap radio-track-active' : 'radio-track-wrap'}>
+                    <div
+                      className="radio-track"
+                      onClick={() => track.audioUrl && setExpandedTrack(isExpanded ? null : key)}
+                      style={{ cursor: track.audioUrl ? 'pointer' : 'default' }}
+                    >
+                      {isCurrentTrack && <span className="radio-track-num">▶</span>}
+                      <span className="radio-track-title">{track.label || track.title}</span>
+                      {track.duration != null && track.duration > 0 && (
+                        <span className="radio-track-duration">
+                          {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
+                        </span>
+                      )}
+                    </div>
+                    {isExpanded && track.audioUrl && (
+                      <audio controls src={track.audioUrl} className="radio-track-player" preload="metadata" />
                     )}
                   </li>
                 )
               })}
-              {playedTracks.map((track, i) => (
-                <li key={track._key || `played-${i}`} className="radio-track radio-track-played">
-                  <span className="radio-track-title">{track.label || track.title}</span>
-                  {track.duration != null && track.duration > 0 && (
-                    <span className="radio-track-duration">
-                      {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
-                    </span>
-                  )}
-                </li>
-              ))}
+              {playedTracks.map((track, i) => {
+                const key = track._key || `played-${i}`
+                const isExpanded = expandedTrack === key
+                return (
+                  <li key={key} className="radio-track-wrap radio-track-played">
+                    <div
+                      className="radio-track"
+                      onClick={() => track.audioUrl && setExpandedTrack(isExpanded ? null : key)}
+                      style={{ cursor: track.audioUrl ? 'pointer' : 'default' }}
+                    >
+                      <span className="radio-track-title">{track.label || track.title}</span>
+                      {track.duration != null && track.duration > 0 && (
+                        <span className="radio-track-duration">
+                          {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
+                        </span>
+                      )}
+                    </div>
+                    {isExpanded && track.audioUrl && (
+                      <audio controls src={track.audioUrl} className="radio-track-player" preload="metadata" />
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}
@@ -385,27 +407,44 @@ const styles = `
   margin: 0;
 }
 
+.radio-track-wrap {
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.radio-track-wrap:hover {
+  opacity: 1;
+}
+
+.radio-track-wrap.radio-track-active {
+  opacity: 1;
+  font-weight: bold;
+}
+
+.radio-track-wrap.radio-track-played {
+  opacity: 0.3 !important;
+}
+
+.radio-track-wrap.radio-track-played:hover {
+  opacity: 0.5 !important;
+}
+
 .radio-track {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 6px 0;
   font-size: 12px;
-  opacity: 0.6;
-  transition: opacity 0.15s;
-}
-
-.radio-track:hover {
-  opacity: 1;
-}
-
-.radio-track-active {
-  opacity: 1;
-  font-weight: bold;
 }
 
 .radio-track-active .radio-track-num {
   color: #ff3700;
+}
+
+.radio-track-player {
+  width: 100%;
+  height: 28px;
+  margin: 4px 0 6px;
 }
 
 .radio-track-num {
@@ -425,10 +464,6 @@ const styles = `
   font-size: 10px;
   opacity: 0.4;
   font-variant-numeric: tabular-nums;
-}
-
-.radio-track-played {
-  opacity: 0.3 !important;
 }
 
 @media (max-width: 768px) {
