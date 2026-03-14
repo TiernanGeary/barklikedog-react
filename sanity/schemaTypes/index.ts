@@ -8,7 +8,8 @@ import { blockContent } from './blockContent'
 import { siteSettings } from './siteSettings'
 import { radioQueue } from './radioQueue'
 import { radioSettings } from './radioSettings'
+import { radioChatMessage } from './radioChatMessage'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [siteSettings, product, post, media, category, page, blockContent, radioQueue, radioSettings],
+  types: [siteSettings, product, post, media, category, page, blockContent, radioQueue, radioSettings, radioChatMessage],
 }

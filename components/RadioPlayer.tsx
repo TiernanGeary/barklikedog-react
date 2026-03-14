@@ -3,16 +3,25 @@
 import { useRef, useState, useEffect } from 'react'
 import type { RadioTrack } from '@/lib/types'
 import RadioUpload from './RadioUpload'
+import RadioChat from './RadioChat'
 
 const STREAM_URL = process.env.NEXT_PUBLIC_RADIO_STREAM_URL || ''
+
+interface ChatMessage {
+  _id: string
+  nickname: string
+  message: string
+  _createdAt: string
+}
 
 interface Props {
   tracks: RadioTrack[]
   uploadsEnabled: boolean
   azuracastBaseUrl: string
+  chatMessages: ChatMessage[]
 }
 
-export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }: Props) {
+export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
@@ -197,6 +206,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
           </div>
         </div>
 
+        <div className="radio-bottom">
         {tracks.length > 0 && (
           <div className="radio-tracklist">
             <div className="radio-tracklist-header">QUEUE</div>
@@ -254,6 +264,9 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
         )}
 
         {uploadsEnabled && <RadioUpload />}
+
+        <RadioChat messages={chatMessages} />
+        </div>
       </div>
     </div>
   )
@@ -386,12 +399,19 @@ const styles = `
   cursor: pointer;
 }
 
+.radio-bottom {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
 .radio-tracklist {
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
   border: 1px solid #e0e0e0;
   padding: 16px 20px;
-  max-width: 400px;
+  width: 350px;
+  flex-shrink: 0;
 }
 
 .radio-tracklist-header {
@@ -471,9 +491,123 @@ const styles = `
     padding: 20px 15px;
   }
 
-  .radio-tracklist {
-    max-width: 100%;
+  .radio-bottom {
+    flex-direction: column;
   }
+
+  .radio-tracklist {
+    width: 100%;
+  }
+
+  .radio-chat {
+    width: 100% !important;
+  }
+}
+
+.radio-chat {
+  width: 350px;
+  border: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  height: 300px;
+  flex-shrink: 0;
+}
+
+.radio-chat-header {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  opacity: 0.5;
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.radio-chat-nick-display {
+  font-size: 10px;
+  letter-spacing: 0;
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.radio-chat-nick-display:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.radio-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px;
+}
+
+.radio-chat-empty {
+  font-size: 11px;
+  opacity: 0.3;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.radio-chat-msg {
+  font-size: 11px;
+  padding: 3px 0;
+  line-height: 1.4;
+}
+
+.radio-chat-time {
+  font-size: 9px;
+  opacity: 0.3;
+  margin-right: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.radio-chat-author {
+  font-weight: bold;
+  margin-right: 6px;
+}
+
+.radio-chat-text {
+  word-break: break-word;
+}
+
+.radio-chat-form,
+.radio-chat-nickname-form {
+  display: flex;
+  gap: 0;
+  padding: 12px 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.radio-chat-input {
+  flex: 1;
+  font-size: 11px;
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  border-right: none;
+  outline: none;
+  font-family: inherit;
+  color: #333;
+}
+
+.radio-chat-input:focus {
+  border-color: #333;
+}
+
+.radio-chat-send {
+  background-color: #0059e7;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.radio-chat-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .radio-upload {
