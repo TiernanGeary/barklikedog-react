@@ -39,33 +39,50 @@ export async function fetchQueue(): Promise<RadioQueue | null> {
 let lastTrackKeys = ''
 let lastLoop: boolean | null = null
 
+function checkQueue(
+  queue: RadioQueue,
+  onTracksChanged: (queue: RadioQueue) => void,
+  onSettingsChanged: (queue: RadioQueue) => void,
+) {
+  const keys = (queue.tracks ?? []).map((t) => t._key).join(',')
+  const loop = queue.loopPlaylist ?? true
+
+  const tracksChanged = keys !== lastTrackKeys
+  const loopChanged = lastLoop !== null && loop !== lastLoop
+
+  lastTrackKeys = keys
+  lastLoop = loop
+
+  if (tracksChanged) {
+    console.log('[sanity] Track list changed, triggering full sync')
+    onTracksChanged(queue)
+  } else if (loopChanged) {
+    console.log(`[sanity] Loop setting changed to ${loop}, updating playlist`)
+    onSettingsChanged(queue)
+  }
+}
+
 export function listenToQueue(
   onTracksChanged: (queue: RadioQueue) => void,
   onSettingsChanged: (queue: RadioQueue) => void,
 ) {
+  // Real-time listener
   const subscription = sanityClient
     .listen('*[_type == "radioQueue"]')
     .subscribe(() => {
       fetchQueue().then((queue) => {
-        if (!queue) return
-        const keys = (queue.tracks ?? []).map((t) => t._key).join(',')
-        const loop = queue.loopPlaylist ?? true
-
-        const tracksChanged = keys !== lastTrackKeys
-        const loopChanged = lastLoop !== null && loop !== lastLoop
-
-        lastTrackKeys = keys
-        lastLoop = loop
-
-        if (tracksChanged) {
-          console.log('[sanity] Track list changed, triggering full sync')
-          onTracksChanged(queue)
-        } else if (loopChanged) {
-          console.log(`[sanity] Loop setting changed to ${loop}, updating playlist`)
-          onSettingsChanged(queue)
-        }
+        if (queue) checkQueue(queue, onTracksChanged, onSettingsChanged)
       })
     })
 
-  return subscription
+  // Poll every 60s as safety net in case the listener drops
+  const pollInterval = setInterval(() => {
+    fetchQueue().then((queue) => {
+      if (queue) checkQueue(queue, onTracksChanged, onSettingsChanged)
+    }).catch((err) => {
+      console.error('[sanity] Poll error:', err)
+    })
+  }, 60_000)
+
+  return { subscription, pollInterval }
 }
