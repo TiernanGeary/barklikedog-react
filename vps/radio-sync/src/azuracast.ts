@@ -128,6 +128,38 @@ export async function setPlaylistOrder(
   )
 }
 
+export async function assignFileToPlaylist(fileId: number, playlistId: number) {
+  await fetch(
+    `${BASE_URL}/api/station/${STATION_ID}/file/${fileId}`,
+    {
+      method: 'PUT',
+      headers: jsonHeaders,
+      body: JSON.stringify({ playlists: [playlistId] }),
+    },
+  )
+}
+
+export async function setPlaylistSequential(playlistId: number) {
+  await fetch(
+    `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}`,
+    {
+      method: 'PUT',
+      headers: jsonHeaders,
+      body: JSON.stringify({ order: 'sequential' }),
+    },
+  )
+}
+
+export async function emptyPlaylist(playlistId: number) {
+  await fetch(
+    `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/empty`,
+    {
+      method: 'DELETE',
+      headers,
+    },
+  )
+}
+
 export async function findMediaByPath(
   path: string,
 ): Promise<{ id: number; path: string } | null> {

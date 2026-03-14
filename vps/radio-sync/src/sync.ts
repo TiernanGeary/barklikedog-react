@@ -8,6 +8,9 @@ import {
   uploadMedia,
   findMediaByPath,
   setPlaylistOrder,
+  assignFileToPlaylist,
+  setPlaylistSequential,
+  emptyPlaylist,
   subscribeNowPlaying,
   type NowPlayingEvent,
 } from './azuracast.js'
@@ -68,8 +71,14 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
     mediaIds.push(azId)
   }
 
+  // Clear playlist, then assign only current tracks in order
+  await emptyPlaylist(playlistId)
+  for (const id of mediaIds) {
+    await assignFileToPlaylist(id, playlistId)
+  }
+  await setPlaylistSequential(playlistId)
   await setPlaylistOrder(playlistId, mediaIds)
-  console.log(`[sync] Playlist updated: ${mediaIds.length} tracks`)
+  console.log(`[sync] Playlist updated: ${mediaIds.length} tracks (sequential)`)
 }
 
 // Log-only SSE subscription — no Sanity writes
