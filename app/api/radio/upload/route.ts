@@ -85,32 +85,41 @@ export async function POST(request: NextRequest) {
 
       if (queueId) {
         const key = crypto.randomUUID().replace(/-/g, '').slice(0, 12)
-        await fetch(
-          `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/mutate/${SANITY_DATASET}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${SANITY_API_TOKEN}`,
-            },
-            body: JSON.stringify({
-              mutations: [{
+        const mutateUrl = `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/mutate/${SANITY_DATASET}`
+        const mutateHeaders = {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${SANITY_API_TOKEN}`,
+        }
+        const trackItem = {
+          _key: key,
+          _type: 'queuedTrack',
+          trackRef: { _type: 'reference', _ref: mediaDocId },
+        }
+
+        // Two mutations: first ensure tracks array exists, then append
+        await fetch(mutateUrl, {
+          method: 'POST',
+          headers: mutateHeaders,
+          body: JSON.stringify({
+            mutations: [
+              {
                 patch: {
                   id: queueId,
                   setIfMissing: { tracks: [] },
+                },
+              },
+              {
+                patch: {
+                  id: queueId,
                   insert: {
                     after: 'tracks[-1]',
-                    items: [{
-                      _key: key,
-                      _type: 'queuedTrack',
-                      trackRef: { _type: 'reference', _ref: mediaDocId },
-                    }],
+                    items: [trackItem],
                   },
                 },
-              }],
-            }),
-          },
-        )
+              },
+            ],
+          }),
+        })
       }
     }
 
