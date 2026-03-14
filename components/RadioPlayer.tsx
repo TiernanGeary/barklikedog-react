@@ -276,32 +276,42 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
 
 const styles = `
 .radio-page {
-  padding: 40px 40px;
+  padding: 20px 30px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .radio-video-wrap {
   max-width: 100%;
-  margin-bottom: 20px;
-  aspect-ratio: 16 / 9;
+  margin-bottom: 12px;
+  max-height: 35vh;
   background: #ffffff;
 }
 
 .radio-video-wrap video {
   width: 100%;
   height: 100%;
+  max-height: 35vh;
   object-fit: contain;
   display: block;
 }
 
 .radio-controls-area {
   color: #333333;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .radio-now-playing {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .radio-live-dot {
@@ -332,7 +342,7 @@ const styles = `
   display: flex;
   align-items: center;
   gap: 20px;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .radio-play-btn {
@@ -404,26 +414,32 @@ const styles = `
 .radio-bottom {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .radio-left {
   width: 350px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .radio-tracklist {
-  max-height: 300px;
+  flex: 1;
   overflow-y: auto;
   border: 1px solid #e0e0e0;
-  padding: 16px 20px;
+  padding: 12px 20px;
+  min-height: 0;
 }
 
 .radio-tracklist-header {
   font-size: 10px;
   letter-spacing: 0.15em;
   opacity: 0.5;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .radio-tracklist ul {
@@ -493,7 +509,13 @@ const styles = `
 
 @media (max-width: 768px) {
   .radio-page {
-    padding: 20px 15px;
+    padding: 15px;
+    height: auto;
+    overflow: auto;
+  }
+
+  .radio-video-wrap {
+    max-height: 30vh;
   }
 
   .radio-bottom {
@@ -506,6 +528,7 @@ const styles = `
 
   .radio-chat {
     width: 100% !important;
+    height: 300px;
   }
 }
 
@@ -513,15 +536,53 @@ const styles = `
   width: 350px;
   display: flex;
   flex-direction: column;
-  height: 300px;
   flex-shrink: 0;
+  min-height: 0;
+  border: 1px solid #e0e0e0;
 }
 
 .radio-chat-header {
   font-size: 10px;
   letter-spacing: 0.15em;
+  padding: 12px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.radio-chat-header > span:first-child {
   opacity: 0.5;
-  padding: 16px 20px 12px;
+}
+
+.radio-chat-header-form {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.radio-chat-header-input {
+  flex: 1;
+  font-size: 10px;
+  padding: 2px 0;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  outline: none;
+  font-family: inherit;
+  color: #333;
+  min-width: 0;
+  background: transparent;
+}
+
+.radio-chat-header-input:focus {
+  border-bottom-color: #333;
+}
+
+.radio-chat-input-disabled {
+  font-size: 10px;
+  opacity: 0.3;
+  padding: 6px 0;
 }
 
 .radio-chat-messages {
@@ -559,12 +620,10 @@ const styles = `
 }
 
 .radio-chat-name-tag {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: bold;
-  padding: 6px 8px 6px 0;
   cursor: pointer;
   flex-shrink: 0;
-  border-bottom: 1px solid transparent;
 }
 
 .radio-chat-name-tag:hover {
