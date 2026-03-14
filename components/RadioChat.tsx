@@ -31,8 +31,9 @@ export default function RadioChat({ messages }: Props) {
   // Clear optimistic messages once they appear in server data
   useEffect(() => {
     if (optimistic.length > 0) {
-      const serverIds = new Set(messages.map((m) => m._id))
-      setOptimistic((prev) => prev.filter((m) => !serverIds.has(m._id)))
+      setOptimistic((prev) => prev.filter((opt) =>
+        !messages.some((m) => m.nickname === opt.nickname && m.message === opt.message)
+      ))
     }
   }, [messages])
 
