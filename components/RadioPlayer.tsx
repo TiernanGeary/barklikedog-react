@@ -414,6 +414,7 @@ const styles = `
   padding: 8px 16px;
   border: 1px solid #333;
   background: none;
+  color: #333;
   cursor: pointer;
   align-self: flex-start;
   font-family: inherit;
