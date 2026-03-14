@@ -73,7 +73,7 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
           <span className="radio-live-dot" />
           <span className="radio-live-label">LIVE</span>
           {nowPlaying && (
-            <span className="radio-now-title">{nowPlaying}</span>
+            <span className="radio-now-title">Currently Playing: {nowPlaying}</span>
           )}
         </div>
 
