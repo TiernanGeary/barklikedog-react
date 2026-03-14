@@ -80,13 +80,9 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
           <button
             className="radio-play-btn"
             onClick={togglePlay}
-            aria-label={isPlaying ? 'Pause' : 'Play'}
+            aria-label={isPlaying ? 'Tune Out' : 'Tune In'}
           >
-            {isPlaying ? (
-              <span className="radio-icon-pause" />
-            ) : (
-              <span className="radio-icon-play" />
-            )}
+            {isPlaying ? 'TUNE OUT' : 'TUNE IN'}
           </button>
 
           <div className="radio-volume">
@@ -206,46 +202,20 @@ const styles = `
 }
 
 .radio-play-btn {
-  background: none;
-  border: 1px solid #333333;
+  background-color: #0059e7;
+  color: #ffffff;
+  border: 0.5px solid transparent;
   cursor: pointer;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: opacity 0.2s;
-  padding: 0;
+  padding: 6px 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: bold;
+  transition: all 0.2s ease;
 }
 
 .radio-play-btn:hover {
-  opacity: 0.6;
-  background: none;
-}
-
-.radio-icon-play {
-  display: block;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 8px 0 8px 14px;
-  border-color: transparent transparent transparent #333333;
-  margin-left: 3px;
-}
-
-.radio-icon-pause {
-  display: flex;
-  gap: 4px;
-}
-
-.radio-icon-pause::before,
-.radio-icon-pause::after {
-  content: '';
-  display: block;
-  width: 4px;
-  height: 16px;
-  background: #333333;
+  background-color: #0059e7;
+  color: #ffffff;
 }
 
 
@@ -385,11 +355,21 @@ const styles = `
   max-width: 400px;
 }
 
-.radio-upload-header {
+.radio-upload-toggle {
+  background-color: #0059e7;
+  color: #ffffff;
+  border: 0.5px solid transparent;
+  cursor: pointer;
+  padding: 6px 6px;
+  font-family: 'Courier New', monospace;
   font-size: 10px;
-  letter-spacing: 0.15em;
-  opacity: 0.5;
-  margin-bottom: 4px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.radio-upload-toggle:hover {
+  background-color: #0059e7;
+  color: #ffffff;
 }
 
 .radio-upload-hint {
@@ -404,12 +384,19 @@ const styles = `
   gap: 8px;
 }
 
+.radio-upload-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
 .radio-upload-title {
   font-size: 12px;
   padding: 8px 12px;
   border: 1px solid #e0e0e0;
   outline: none;
   font-family: inherit;
+  color: #333;
 }
 
 .radio-upload-title:focus {
@@ -421,25 +408,26 @@ const styles = `
 }
 
 .radio-upload-btn {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  padding: 8px 16px;
-  border: 1px solid #333;
-  background: none;
-  color: #333;
+  background-color: #0059e7;
+  color: #ffffff;
+  border: 0.5px solid transparent;
   cursor: pointer;
+  padding: 6px 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  font-weight: bold;
+  transition: all 0.2s ease;
   align-self: flex-start;
-  font-family: inherit;
 }
 
 .radio-upload-btn:hover:not(:disabled) {
-  background: #333;
-  color: #fff;
+  background-color: #0059e7;
+  color: #ffffff;
 }
 
 .radio-upload-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .radio-upload-success {

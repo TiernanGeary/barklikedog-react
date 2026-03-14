@@ -5,6 +5,7 @@ import { useState, useRef } from 'react'
 const UPLOAD_PROXY = process.env.NEXT_PUBLIC_UPLOAD_PROXY_URL || ''
 
 export default function RadioUpload() {
+  const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -67,14 +68,26 @@ export default function RadioUpload() {
     }
   }
 
+  if (!open) {
+    return (
+      <div className="radio-upload">
+        <button
+          className="radio-upload-toggle"
+          onClick={() => setOpen(true)}
+        >
+          Upload a Track
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="radio-upload">
-      <div className="radio-upload-header">UPLOAD A TRACK</div>
       <div className="radio-upload-hint">MP3, M4A, OGG, WAV, FLAC — max 50MB</div>
       <form onSubmit={handleSubmit}>
+        <label className="radio-upload-label">Track Title:</label>
         <input
           type="text"
-          placeholder="Track title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="radio-upload-title"
