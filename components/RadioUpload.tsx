@@ -43,6 +43,7 @@ export default function RadioUpload() {
   return (
     <div className="radio-upload">
       <div className="radio-upload-header">UPLOAD A TRACK</div>
+      <div className="radio-upload-hint">MP3, M4A, OGG, WAV, FLAC — max 50MB</div>
       <form onSubmit={handleSubmit}>
         <input
           type="text"
@@ -55,7 +56,7 @@ export default function RadioUpload() {
         <input
           ref={fileRef}
           type="file"
-          accept="audio/*"
+          accept=".mp3,.m4a,.ogg,.wav,.flac,.aac,.webm"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           className="radio-upload-file"
           disabled={uploading}

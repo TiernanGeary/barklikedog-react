@@ -435,6 +435,12 @@ const styles = `
   font-size: 10px;
   letter-spacing: 0.15em;
   opacity: 0.5;
+  margin-bottom: 4px;
+}
+
+.radio-upload-hint {
+  font-size: 10px;
+  opacity: 0.35;
   margin-bottom: 12px;
 }
 

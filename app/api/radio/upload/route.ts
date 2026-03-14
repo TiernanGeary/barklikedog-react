@@ -53,10 +53,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate mime type
-    if (!file.type.startsWith('audio/')) {
+    // Validate mime type — only common audio formats
+    const ALLOWED_TYPES = [
+      'audio/mpeg',       // .mp3
+      'audio/mp4',        // .m4a
+      'audio/ogg',        // .ogg
+      'audio/wav',        // .wav
+      'audio/x-wav',      // .wav (alt)
+      'audio/flac',       // .flac
+      'audio/aac',        // .aac
+      'audio/webm',       // .webm
+    ]
+    if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Invalid file type. Only audio files are allowed.' },
+        { error: 'Invalid file type. Accepted: MP3, M4A, OGG, WAV, FLAC, AAC, WebM.' },
         { status: 400 },
       )
     }
