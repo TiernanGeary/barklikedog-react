@@ -18,103 +18,77 @@ const NICKNAME_KEY = 'radio-chat-nickname'
 
 export default function RadioChat({ messages }: Props) {
   const [nickname, setNickname] = useState('')
-  const [nicknameSet, setNicknameSet] = useState(false)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [optimistic, setOptimistic] = useState<ChatMessage[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Load saved nickname
   useEffect(() => {
     const saved = localStorage.getItem(NICKNAME_KEY)
-    if (saved) {
-      setNickname(saved)
-      setNicknameSet(true)
-    }
+    if (saved) setNickname(saved)
   }, [])
 
-  // Auto-scroll on new messages
+  // Clear optimistic messages once they appear in server data
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (optimistic.length > 0) {
+      const serverIds = new Set(messages.map((m) => m._id))
+      setOptimistic((prev) => prev.filter((m) => !serverIds.has(m._id)))
+    }
   }, [messages])
 
-  function handleSetNickname(e: React.FormEvent) {
-    e.preventDefault()
-    if (!nickname.trim()) return
-    const name = nickname.trim().slice(0, 20)
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, optimistic])
+
+  function saveNickname(name: string) {
     setNickname(name)
-    setNicknameSet(true)
-    localStorage.setItem(NICKNAME_KEY, name)
+    if (name.trim()) localStorage.setItem(NICKNAME_KEY, name.trim())
   }
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault()
-    if (!input.trim() || sending) return
+    const name = nickname.trim().slice(0, 20)
+    const msg = input.trim().slice(0, 280)
+    if (!name || !msg || sending) return
 
+    saveNickname(name)
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`
+    setOptimistic((prev) => [...prev, {
+      _id: tempId,
+      nickname: name,
+      message: msg,
+      _createdAt: new Date().toISOString(),
+    }])
+    setInput('')
     setSending(true)
+
     try {
       await fetch('/api/radio/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname, message: input.trim().slice(0, 280) }),
+        body: JSON.stringify({ nickname: name, message: msg }),
       })
-      setInput('')
     } catch {
-      // Silent fail
+      // Remove optimistic on failure
+      setOptimistic((prev) => prev.filter((m) => m._id !== tempId))
     } finally {
       setSending(false)
     }
   }
 
-  function formatTime(dateStr: string) {
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    } catch {
-      return ''
-    }
-  }
-
-  if (!nicknameSet) {
-    return (
-      <div className="radio-chat">
-        <div className="radio-chat-header">CHAT</div>
-        <form onSubmit={handleSetNickname} className="radio-chat-nickname-form">
-          <input
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder="Pick a nickname..."
-            className="radio-chat-input"
-            maxLength={20}
-            autoFocus
-          />
-          <button type="submit" disabled={!nickname.trim()} className="radio-chat-send">
-            Join
-          </button>
-        </form>
-      </div>
-    )
-  }
+  const allMessages = [...messages, ...optimistic]
 
   return (
     <div className="radio-chat">
-      <div className="radio-chat-header">
-        CHAT
-        <span
-          className="radio-chat-nick-display"
-          onClick={() => { setNicknameSet(false) }}
-          title="Click to change nickname"
-        >
-          {nickname}
-        </span>
-      </div>
+      <div className="radio-chat-header">CHAT</div>
       <div className="radio-chat-messages">
-        {messages.length === 0 && (
+        {allMessages.length === 0 && (
           <div className="radio-chat-empty">No messages yet</div>
         )}
-        {messages.map((msg) => (
+        {allMessages.map((msg) => (
           <div key={msg._id} className="radio-chat-msg">
-            <span className="radio-chat-time">{formatTime(msg._createdAt)}</span>
             <span className="radio-chat-author" style={{ color: avatarColor(msg.nickname) }}>
               {msg.nickname}
             </span>
@@ -126,14 +100,22 @@ export default function RadioChat({ messages }: Props) {
       <form onSubmit={handleSend} className="radio-chat-form">
         <input
           type="text"
+          value={nickname}
+          onChange={(e) => saveNickname(e.target.value)}
+          placeholder="Name"
+          className="radio-chat-name-input"
+          maxLength={20}
+        />
+        <input
+          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Say something..."
+          placeholder={nickname.trim() ? 'Say something...' : 'Set a name first'}
           className="radio-chat-input"
           maxLength={280}
-          disabled={sending}
+          disabled={!nickname.trim() || sending}
         />
-        <button type="submit" disabled={sending || !input.trim()} className="radio-chat-send">
+        <button type="submit" disabled={sending || !input.trim() || !nickname.trim()} className="radio-chat-send">
           Send
         </button>
       </form>

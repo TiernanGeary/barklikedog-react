@@ -518,21 +518,6 @@ const styles = `
   letter-spacing: 0.15em;
   opacity: 0.5;
   padding: 16px 20px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.radio-chat-nick-display {
-  font-size: 10px;
-  letter-spacing: 0;
-  opacity: 0.6;
-  cursor: pointer;
-}
-
-.radio-chat-nick-display:hover {
-  opacity: 1;
-  text-decoration: underline;
 }
 
 .radio-chat-messages {
@@ -554,13 +539,6 @@ const styles = `
   line-height: 1.4;
 }
 
-.radio-chat-time {
-  font-size: 9px;
-  opacity: 0.3;
-  margin-right: 6px;
-  font-variant-numeric: tabular-nums;
-}
-
 .radio-chat-author {
   font-weight: bold;
   margin-right: 6px;
@@ -570,12 +548,28 @@ const styles = `
   word-break: break-word;
 }
 
-.radio-chat-form,
-.radio-chat-nickname-form {
+.radio-chat-form {
   display: flex;
   gap: 0;
   padding: 12px 16px;
   border-top: 1px solid #e0e0e0;
+}
+
+.radio-chat-name-input {
+  width: 70px;
+  font-size: 11px;
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-right: none;
+  outline: none;
+  font-family: inherit;
+  color: #333;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.radio-chat-name-input:focus {
+  border-color: #333;
 }
 
 .radio-chat-input {
@@ -587,10 +581,15 @@ const styles = `
   outline: none;
   font-family: inherit;
   color: #333;
+  min-width: 0;
 }
 
 .radio-chat-input:focus {
   border-color: #333;
+}
+
+.radio-chat-input:disabled {
+  opacity: 0.4;
 }
 
 .radio-chat-send {
