@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 
+const UPLOAD_PROXY = process.env.NEXT_PUBLIC_UPLOAD_PROXY_URL || ''
+
 export default function RadioUpload() {
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
@@ -11,17 +13,42 @@ export default function RadioUpload() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!file || !title.trim()) return
+    if (!file || !title.trim() || !UPLOAD_PROXY) return
 
     setUploading(true)
     setResult(null)
 
-    const form = new FormData()
-    form.append('file', file)
-    form.append('title', title.trim())
-
     try {
-      const res = await fetch('/api/radio/upload', { method: 'POST', body: form })
+      // Step 1: Upload file to Sanity via VPS proxy (bypasses Vercel size limit)
+      const uploadRes = await fetch(`${UPLOAD_PROXY}/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type,
+          'X-Filename': file.name,
+        },
+        body: file,
+      })
+
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({ error: 'Upload failed' }))
+        setResult({ type: 'error', message: err.error || 'Upload failed' })
+        return
+      }
+
+      const uploadData = await uploadRes.json()
+      const assetId = uploadData.document._id
+
+      // Step 2: Create media doc and queue it via Vercel API (tiny JSON payload)
+      const res = await fetch('/api/radio/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          assetId,
+          mimeType: file.type,
+        }),
+      })
+
       const data = await res.json()
 
       if (!res.ok) {
