@@ -207,6 +207,23 @@ export async function emptyPlaylist(playlistId: number) {
   )
 }
 
+export async function clearUpcomingQueue() {
+  const res = await apiCall(
+    `${BASE_URL}/api/station/${STATION_ID}/queue`,
+    { headers },
+  )
+  const items: { links?: { self?: string } }[] = await res.json()
+  for (const item of items) {
+    const url = item.links?.self
+    if (url) {
+      await apiCall(url, { method: 'DELETE', headers }).catch(() => {})
+    }
+  }
+  if (items.length > 0) {
+    console.log(`[azuracast] Cleared ${items.length} queued items`)
+  }
+}
+
 export async function findMediaByPath(
   filename: string,
 ): Promise<{ id: number; path: string } | null> {

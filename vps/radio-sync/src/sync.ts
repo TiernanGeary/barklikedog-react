@@ -11,6 +11,7 @@ import {
   setPlaylistSequential,
   setPlaylistLoop,
   emptyPlaylist,
+  clearUpcomingQueue,
   subscribeNowPlaying,
   type NowPlayingEvent,
 } from './azuracast.js'
@@ -88,6 +89,7 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
   }
   await setPlaylistSequential(playlistId)
   await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+  await clearUpcomingQueue()
   console.log(`[sync] Playlist updated: ${mediaIds.length} tracks (sequential, loop=${queue.loopPlaylist ?? true})`)
 }
 
