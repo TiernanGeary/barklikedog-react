@@ -74,11 +74,19 @@ export interface RadioTrack {
   label?: string
   audioUrl: string
   coverArt?: string
+  status?: 'approved' | 'pending' | 'rejected'
 }
 
 export interface RadioQueue {
   tracks: RadioTrack[]
   loopPlaylist: boolean
+  currentTrackIndex: number
+  currentTrackStartedAt?: string
+}
+
+export interface RadioSettings {
+  moderationEnabled: boolean
+  maxUploadSizeMB: number
 }
 
 export interface Comment {

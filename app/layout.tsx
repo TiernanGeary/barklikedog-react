@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Sidebar from '@/components/Sidebar'
 import PageTransition from '@/components/PageTransition'
+import { SanityLive } from '@/sanity/lib/live'
 
 export const metadata: Metadata = {
   title: 'Bark Like Dog',
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer id="footer">
           <p>© {new Date().getFullYear()} Bark Like Dog</p>
         </footer>
+        <SanityLive />
       </body>
     </html>
   )

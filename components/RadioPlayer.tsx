@@ -1,41 +1,24 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import type { RadioTrack } from '@/lib/types'
+import RadioUpload from './RadioUpload'
 
 const STREAM_URL = process.env.NEXT_PUBLIC_RADIO_STREAM_URL || ''
-const NOW_PLAYING_URL = process.env.NEXT_PUBLIC_RADIO_NOW_PLAYING_URL || ''
-const POLL_INTERVAL = 10_000
 
 interface Props {
   tracks: RadioTrack[]
+  currentTrackIndex: number
 }
 
-export default function RadioPlayer({ tracks }: Props) {
+export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
   const [muted, setMuted] = useState(false)
-  const [nowPlaying, setNowPlaying] = useState<string>('')
 
-  // Poll the now-playing endpoint from Liquidsoap
-  useEffect(() => {
-    if (!NOW_PLAYING_URL) return
-
-    async function poll() {
-      try {
-        const res = await fetch(NOW_PLAYING_URL, { cache: 'no-store' })
-        const data = await res.json()
-        if (data.title) setNowPlaying(data.title)
-      } catch {
-        // stream may be down
-      }
-    }
-
-    poll()
-    const id = setInterval(poll, POLL_INTERVAL)
-    return () => clearInterval(id)
-  }, [])
+  const activeTrack = tracks[currentTrackIndex]
+  const nowPlaying = activeTrack?.label || activeTrack?.title || ''
 
   function togglePlay() {
     const audio = audioRef.current
@@ -137,19 +120,20 @@ export default function RadioPlayer({ tracks }: Props) {
               {tracks.map((track, i) => (
                 <li
                   key={i}
-                  className={
-                    nowPlaying === (track.label || track.title)
-                      ? 'radio-track radio-track-active'
-                      : 'radio-track'
-                  }
+                  className={i === currentTrackIndex ? 'radio-track radio-track-active' : 'radio-track'}
                 >
                   <span className="radio-track-num">{String(i + 1).padStart(2, '0')}</span>
                   <span className="radio-track-title">{track.label || track.title}</span>
+                  {track.status === 'pending' && (
+                    <span className="radio-track-pending">PENDING</span>
+                  )}
                 </li>
               ))}
             </ul>
           </div>
         )}
+
+        <RadioUpload />
       </div>
     </div>
   )
@@ -372,5 +356,81 @@ const styles = `
   .radio-tracklist {
     max-width: 100%;
   }
+}
+
+.radio-track-pending {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: #ff8c00;
+  border: 1px solid #ff8c00;
+  padding: 1px 6px;
+  margin-left: auto;
+}
+
+.radio-upload {
+  margin-top: 24px;
+  max-width: 400px;
+}
+
+.radio-upload-header {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  opacity: 0.5;
+  margin-bottom: 12px;
+}
+
+.radio-upload form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-upload-title {
+  font-size: 12px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  outline: none;
+  font-family: inherit;
+}
+
+.radio-upload-title:focus {
+  border-color: #333;
+}
+
+.radio-upload-file {
+  font-size: 11px;
+}
+
+.radio-upload-btn {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 8px 16px;
+  border: 1px solid #333;
+  background: none;
+  cursor: pointer;
+  align-self: flex-start;
+  font-family: inherit;
+}
+
+.radio-upload-btn:hover:not(:disabled) {
+  background: #333;
+  color: #fff;
+}
+
+.radio-upload-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.radio-upload-success {
+  font-size: 11px;
+  color: #369843;
+  margin-top: 8px;
+}
+
+.radio-upload-error {
+  font-size: 11px;
+  color: #cd2f2f;
+  margin-top: 8px;
 }
 `

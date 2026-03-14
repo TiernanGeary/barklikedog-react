@@ -15,8 +15,19 @@ export const structure: StructureResolver = (S) =>
             .title('Site Settings')
         ),
       S.divider(),
-      // All other document types except siteSettings
+      // Radio Settings as a singleton
+      S.listItem()
+        .title('Radio Settings')
+        .id('radioSettings')
+        .child(
+          S.document()
+            .schemaType('radioSettings')
+            .documentId('radioSettings')
+            .title('Radio Settings')
+        ),
+      S.divider(),
+      // All other document types except singletons
       ...S.documentTypeListItems().filter(
-        (item) => item.getId() !== 'siteSettings'
+        (item) => item.getId() !== 'siteSettings' && item.getId() !== 'radioSettings'
       ),
     ])

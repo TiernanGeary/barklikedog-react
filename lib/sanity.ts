@@ -1,6 +1,6 @@
 import { client } from '@/sanity/lib/client'
 import imageUrlBuilder from '@sanity/image-url'
-import type { Product, Post, MediaItem, Page, Category, SanityImage, RadioQueue } from './types'
+import type { Product, Post, MediaItem, Page, Category, SanityImage, RadioQueue, RadioSettings } from './types'
 
 // ── Site Settings ───────────────────────────────────────────────────────────
 
@@ -108,12 +108,24 @@ export async function getRadioQueue(): Promise<RadioQueue | null> {
   return client.fetch(
     `*[_type == "radioQueue"][0] {
       loopPlaylist,
+      currentTrackIndex,
+      currentTrackStartedAt,
       tracks[] {
         label,
         "title": trackRef->title,
         "audioUrl": trackRef->audioFile.asset->url,
-        "coverArt": trackRef->featuredImage.asset->url
+        "coverArt": trackRef->featuredImage.asset->url,
+        "status": trackRef->status
       }
+    }`
+  )
+}
+
+export async function getRadioSettings(): Promise<RadioSettings | null> {
+  return client.fetch(
+    `*[_type == "radioSettings" && _id == "radioSettings"][0] {
+      moderationEnabled,
+      maxUploadSizeMB
     }`
   )
 }

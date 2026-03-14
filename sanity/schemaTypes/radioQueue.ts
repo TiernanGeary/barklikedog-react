@@ -59,6 +59,21 @@ export const radioQueue = defineType({
       description: 'When the queue ends, start over from the beginning',
       initialValue: true,
     }),
+    defineField({
+      name: 'currentTrackIndex',
+      title: 'Current Track Index',
+      type: 'number',
+      description: 'Set by the sync service — do not edit manually',
+      readOnly: true,
+      initialValue: 0,
+    }),
+    defineField({
+      name: 'currentTrackStartedAt',
+      title: 'Current Track Started At',
+      type: 'datetime',
+      description: 'When the current track started playing',
+      readOnly: true,
+    }),
   ],
   preview: {
     select: {title: 'title'},

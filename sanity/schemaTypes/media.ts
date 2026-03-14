@@ -75,6 +75,31 @@ export const media = defineType({
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
     }),
+    defineField({
+      name: 'uploadedBy',
+      title: 'Uploaded By',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Admin', value: 'admin'},
+          {title: 'Listener', value: 'listener'},
+        ],
+      },
+      initialValue: 'admin',
+    }),
+    defineField({
+      name: 'status',
+      title: 'Status',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Approved', value: 'approved'},
+          {title: 'Pending', value: 'pending'},
+          {title: 'Rejected', value: 'rejected'},
+        ],
+      },
+      initialValue: 'approved',
+    }),
   ],
   preview: {
     select: {title: 'title', subtitle: 'mediaType', media: 'featuredImage'},
