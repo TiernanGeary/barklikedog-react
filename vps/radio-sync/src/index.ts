@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { fetchQueue, listenToQueue } from './sanity.js'
-import { syncQueueToAzuraCast, startNowPlayingSubscription } from './sync.js'
+import { syncQueueToAzuraCast, updatePlaylistSettings, startNowPlayingSubscription } from './sync.js'
 
 async function main() {
   console.log('[radio-sync] Starting...')
@@ -17,14 +17,23 @@ async function main() {
     console.log('[radio-sync] No queue found — waiting for changes')
   }
 
-  // Listen for Sanity queue changes (only fires when tracks array changes)
-  listenToQueue(async (queue) => {
-    try {
-      await syncQueueToAzuraCast(queue)
-    } catch (err) {
-      console.error('[radio-sync] Sync error:', err)
-    }
-  })
+  // Listen for changes — full rebuild on track changes, lightweight update on settings
+  listenToQueue(
+    async (queue) => {
+      try {
+        await syncQueueToAzuraCast(queue)
+      } catch (err) {
+        console.error('[radio-sync] Sync error:', err)
+      }
+    },
+    async (queue) => {
+      try {
+        await updatePlaylistSettings(queue)
+      } catch (err) {
+        console.error('[radio-sync] Settings update error:', err)
+      }
+    },
+  )
 
   // Subscribe to AzuraCast SSE for instant now-playing updates
   startNowPlayingSubscription()

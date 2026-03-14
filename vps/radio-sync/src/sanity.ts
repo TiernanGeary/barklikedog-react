@@ -36,20 +36,33 @@ export async function fetchQueue(): Promise<RadioQueue | null> {
   return sanityClient.fetch(QUEUE_QUERY)
 }
 
-let lastFingerprint = ''
+let lastTrackKeys = ''
+let lastLoop: boolean | null = null
 
-export function listenToQueue(callback: (queue: RadioQueue) => void) {
+export function listenToQueue(
+  onTracksChanged: (queue: RadioQueue) => void,
+  onSettingsChanged: (queue: RadioQueue) => void,
+) {
   const subscription = sanityClient
     .listen('*[_type == "radioQueue"]')
     .subscribe(() => {
       fetchQueue().then((queue) => {
         if (!queue) return
         const keys = (queue.tracks ?? []).map((t) => t._key).join(',')
-        const fingerprint = `${keys}|loop=${queue.loopPlaylist}`
-        if (fingerprint !== lastFingerprint) {
-          lastFingerprint = fingerprint
-          console.log('[sanity] Queue changed, triggering sync')
-          callback(queue)
+        const loop = queue.loopPlaylist ?? true
+
+        const tracksChanged = keys !== lastTrackKeys
+        const loopChanged = lastLoop !== null && loop !== lastLoop
+
+        lastTrackKeys = keys
+        lastLoop = loop
+
+        if (tracksChanged) {
+          console.log('[sanity] Track list changed, triggering full sync')
+          onTracksChanged(queue)
+        } else if (loopChanged) {
+          console.log(`[sanity] Loop setting changed to ${loop}, updating playlist`)
+          onSettingsChanged(queue)
         }
       })
     })

@@ -91,6 +91,14 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
   console.log(`[sync] Playlist updated: ${mediaIds.length} tracks (sequential, loop=${queue.loopPlaylist ?? true})`)
 }
 
+// Settings-only update — no playlist rebuild, no interruption to playback
+export async function updatePlaylistSettings(queue: RadioQueue) {
+  const playlistId = await ensurePlaylist()
+  const loop = queue.loopPlaylist ?? true
+  await setPlaylistLoop(playlistId, loop)
+  console.log(`[sync] Playlist loop updated to ${loop} (no rebuild)`)
+}
+
 // Log-only SSE subscription — no Sanity writes
 export function startNowPlayingSubscription() {
   subscribeNowPlaying((np) => {
