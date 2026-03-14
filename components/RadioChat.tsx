@@ -23,6 +23,7 @@ export default function RadioChat({ messages }: Props) {
   const [sending, setSending] = useState(false)
   const [optimistic, setOptimistic] = useState<ChatMessage[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem(NICKNAME_KEY)
@@ -70,6 +71,7 @@ export default function RadioChat({ messages }: Props) {
     }])
     setInput('')
     setSending(true)
+    requestAnimationFrame(() => inputRef.current?.focus())
 
     try {
       await fetch('/api/radio/chat', {
@@ -138,6 +140,7 @@ export default function RadioChat({ messages }: Props) {
       <form onSubmit={nicknameSet ? handleSend : (e) => e.preventDefault()} className="radio-chat-form">
         {nicknameSet && (
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
