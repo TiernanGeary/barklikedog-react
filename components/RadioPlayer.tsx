@@ -511,7 +511,6 @@ const styles = `
 
 .radio-chat {
   width: 350px;
-  border: 1px solid #e0e0e0;
   display: flex;
   flex-direction: column;
   height: 300px;
@@ -556,16 +555,15 @@ const styles = `
 .radio-chat-form {
   display: flex;
   gap: 0;
-  padding: 12px 16px;
-  border-top: 1px solid #e0e0e0;
+  margin-top: auto;
 }
 
 .radio-chat-name-input {
-  width: 70px;
+  width: 60px;
   font-size: 11px;
-  padding: 6px 8px;
-  border: 1px solid #e0e0e0;
-  border-right: none;
+  padding: 6px 0;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
   outline: none;
   font-family: inherit;
   color: #333;
@@ -574,15 +572,15 @@ const styles = `
 }
 
 .radio-chat-name-input:focus {
-  border-color: #333;
+  border-bottom-color: #333;
 }
 
 .radio-chat-input {
   flex: 1;
   font-size: 11px;
-  padding: 6px 10px;
-  border: 1px solid #e0e0e0;
-  border-right: none;
+  padding: 6px 0 6px 8px;
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
   outline: none;
   font-family: inherit;
   color: #333;
@@ -590,28 +588,11 @@ const styles = `
 }
 
 .radio-chat-input:focus {
-  border-color: #333;
+  border-bottom-color: #333;
 }
 
 .radio-chat-input:disabled {
   opacity: 0.4;
-}
-
-.radio-chat-send {
-  background-color: #0059e7;
-  color: #ffffff;
-  border: none;
-  cursor: pointer;
-  padding: 6px 12px;
-  font-family: 'Courier New', monospace;
-  font-size: 10px;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-.radio-chat-send:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .radio-upload {

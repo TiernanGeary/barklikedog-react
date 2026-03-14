@@ -115,9 +115,6 @@ export default function RadioChat({ messages }: Props) {
           maxLength={280}
           disabled={!nickname.trim() || sending}
         />
-        <button type="submit" disabled={sending || !input.trim() || !nickname.trim()} className="radio-chat-send">
-          Send
-        </button>
       </form>
     </div>
   )
