@@ -300,7 +300,13 @@ function UploadTab({
           ref={fileRef}
           type="file"
           accept=".mp3,.m4a,.ogg,.wav,.flac,.aac,.webm"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          onChange={(e) => {
+            const f = e.target.files?.[0] ?? null
+            setFile(f)
+            if (f && !title.trim()) {
+              setTitle(f.name.replace(/\.[^.]+$/, ''))
+            }
+          }}
           className="radio-upload-file"
           disabled={uploading}
         />
