@@ -106,30 +106,38 @@ export async function POST(request: NextRequest) {
           trackRef: { _type: 'reference', _ref: mediaDocId },
         }
 
-        // Two mutations: first ensure tracks array exists, then append
+        // First ensure tracks array exists
         await fetch(mutateUrl, {
           method: 'POST',
           headers: mutateHeaders,
           body: JSON.stringify({
-            mutations: [
-              {
-                patch: {
-                  id: queueId,
-                  setIfMissing: { tracks: [] },
-                },
+            mutations: [{
+              patch: {
+                id: queueId,
+                setIfMissing: { tracks: [] },
               },
-              {
-                patch: {
-                  id: queueId,
-                  insert: {
-                    after: 'tracks[-1]',
-                    items: [trackItem],
-                  },
-                },
-              },
-            ],
+            }],
           }),
         })
+
+        // Then append the track
+        const appendRes = await fetch(mutateUrl, {
+          method: 'POST',
+          headers: mutateHeaders,
+          body: JSON.stringify({
+            mutations: [{
+              patch: {
+                id: queueId,
+                insert: {
+                  after: 'tracks[-1]',
+                  items: [trackItem],
+                },
+              },
+            }],
+          }),
+        })
+        const appendData = await appendRes.json()
+        console.log('Queue append result:', JSON.stringify(appendData))
       }
     }
 
