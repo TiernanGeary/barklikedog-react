@@ -19,10 +19,46 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
   const [muted, setMuted] = useState(false)
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1)
 
-  // Subscribe to AzuraCast SSE for now-playing
+  // Match a song title from AzuraCast to a track index in the queue
+  function matchTrack(songTitle: string): number {
+    if (!songTitle) return -1
+    // Try exact match first, then substring
+    let idx = tracks.findIndex((t) => t.title === songTitle)
+    if (idx < 0) idx = tracks.findIndex((t) => t.title && (t.title.includes(songTitle) || songTitle.includes(t.title)))
+    return idx
+  }
+
+  function updateNowPlaying(songTitle: string) {
+    const idx = matchTrack(songTitle)
+    if (idx >= 0) {
+      setCurrentTrackIndex((prev) => {
+        if (prev !== idx) {
+          // Track changed — reload audio to reconnect to live edge
+          const audio = document.querySelector('audio') as HTMLAudioElement | null
+          if (audio && !audio.paused) {
+            audio.load()
+            audio.play().catch(() => {})
+          }
+        }
+        return idx
+      })
+    }
+  }
+
+  // Fetch initial now-playing from REST API, then subscribe to SSE for updates
   useEffect(() => {
     if (!azuracastBaseUrl) return
 
+    // Initial fetch so we don't wait for the next track change
+    fetch(`${azuracastBaseUrl}/api/nowplaying/1`)
+      .then((res) => res.json())
+      .then((data) => {
+        const title = data?.now_playing?.song?.title
+        if (title) updateNowPlaying(title)
+      })
+      .catch(() => {})
+
+    // SSE for live updates on track change
     const sseUrl = `${azuracastBaseUrl}/api/live/nowplaying/sse?cf_connect=${encodeURIComponent(JSON.stringify({ subs: { 'station:1': { recover: true } } }))}`
 
     let es: EventSource | null = null
@@ -38,26 +74,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
           if (!np) return
 
           const songTitle = np.now_playing?.song?.title
-          if (!songTitle) return
-
-          // Match song title to queue track
-          const idx = tracks.findIndex(
-            (t) => t.title === songTitle || t.title?.includes(songTitle) || songTitle.includes(t.title),
-          )
-
-          if (idx >= 0) {
-            setCurrentTrackIndex((prev) => {
-              if (prev !== idx) {
-                // Track changed — reload audio to reconnect to live edge
-                const audio = document.querySelector('audio') as HTMLAudioElement | null
-                if (audio && !audio.paused) {
-                  audio.load()
-                  audio.play().catch(() => {})
-                }
-              }
-              return idx
-            })
-          }
+          if (songTitle) updateNowPlaying(songTitle)
         } catch {
           // Non-JSON keepalive — ignore
         }
