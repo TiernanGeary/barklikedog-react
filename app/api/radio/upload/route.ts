@@ -87,11 +87,12 @@ export async function POST(request: NextRequest) {
     // If approved, append to radioQueue
     if (status === 'approved' && mediaDocId) {
       const queueRes = await fetch(
-        `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}?query=${encodeURIComponent('*[_type == "radioQueue"][0]{ _id }')}`,
+        `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}?query=${encodeURIComponent('*[_type == "radioQueue"][0]{ _id, "hasTrack": defined(tracks) }')}`,
         { headers: { Authorization: `Bearer ${SANITY_API_TOKEN}` } },
       )
       const queueData = await queueRes.json()
       const queueId = queueData.result?._id
+      const hasTrack = queueData.result?.hasTrack
 
       if (queueId) {
         const key = crypto.randomUUID().replace(/-/g, '').slice(0, 12)
@@ -106,21 +107,11 @@ export async function POST(request: NextRequest) {
           trackRef: { _type: 'reference', _ref: mediaDocId },
         }
 
-        // First ensure tracks array exists
-        await fetch(mutateUrl, {
-          method: 'POST',
-          headers: mutateHeaders,
-          body: JSON.stringify({
-            mutations: [{
-              patch: {
-                id: queueId,
-                setIfMissing: { tracks: [] },
-              },
-            }],
-          }),
-        })
+        // Use set for empty/missing array, insert for existing array
+        const patchOp = hasTrack
+          ? { insert: { after: 'tracks[-1]', items: [trackItem] } }
+          : { set: { tracks: [trackItem] } }
 
-        // Then append the track
         const appendRes = await fetch(mutateUrl, {
           method: 'POST',
           headers: mutateHeaders,
@@ -128,16 +119,17 @@ export async function POST(request: NextRequest) {
             mutations: [{
               patch: {
                 id: queueId,
-                insert: {
-                  after: 'tracks[-1]',
-                  items: [trackItem],
-                },
+                ...patchOp,
               },
             }],
           }),
         })
-        const appendData = await appendRes.json()
-        console.log('Queue append result:', JSON.stringify(appendData))
+
+        if (!appendRes.ok) {
+          const errData = await appendRes.json().catch(() => ({}))
+          console.error('Queue append failed:', JSON.stringify(errData))
+          return NextResponse.json({ error: 'Track created but failed to add to queue' }, { status: 500 })
+        }
       }
     }
 
