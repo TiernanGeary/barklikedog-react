@@ -147,6 +147,9 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
   if (changed) {
     await setPlaylistSequential(playlistId)
     await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+    // Clear pre-generated queue so AzuraCast picks up the new tracks
+    // instead of looping back to track 1 from its stale plan
+    await clearUpcomingQueue()
     console.log(`[sync] Playlist updated incrementally: +${toAdd.length} -${toRemove.length} (${desiredIds.length} total)`)
   } else {
     console.log(`[sync] No changes needed (${desiredIds.length} tracks)`)
