@@ -13,8 +13,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing nickname or message' }, { status: 400 })
     }
 
-    if (nickname.length > 20 || message.length > 280) {
-      return NextResponse.json({ error: 'Nickname max 20 chars, message max 280' }, { status: 400 })
+    if (nickname.length > 20 || nickname.split(/\s+/).length > 2) {
+      return NextResponse.json({ error: 'Nickname: max 2 words, 20 chars' }, { status: 400 })
+    }
+
+    if (message.length > 280 || message.split(/\s+/).length > 50) {
+      return NextResponse.json({ error: 'Message: max 50 words' }, { status: 400 })
     }
 
     const res = await fetch(

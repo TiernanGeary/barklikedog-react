@@ -55,6 +55,8 @@ export default function RadioChat({ messages }: Props) {
     const name = nickname.trim().slice(0, 20)
     const msg = input.trim().slice(0, 280)
     if (!name || !msg || sending) return
+    if (name.split(/\s+/).length > 2) return
+    if (msg.split(/\s+/).length > 50) return
 
     saveNickname(name)
 
@@ -105,8 +107,9 @@ export default function RadioChat({ messages }: Props) {
       {!nicknameSet ? (
         <form onSubmit={(e) => {
           e.preventDefault()
-          if (nickname.trim()) {
-            saveNickname(nickname.trim())
+          const name = nickname.trim()
+          if (name && name.split(/\s+/).length <= 2) {
+            saveNickname(name)
             setNicknameSet(true)
           }
         }} className="radio-chat-form">
