@@ -179,22 +179,31 @@ export async function setPlaylistSequential(playlistId: number) {
   )
 }
 
-export async function setPlaylistLoop(playlistId: number, loop: boolean) {
-  // When loop is off: play_per_songs=1 means "play once per cycle" —
-  // combined with sequential order, it plays through once then stops
-  // When loop is on: play_per_songs=0 means no restriction (default looping)
+export async function setPlaylistLoop(playlistId: number, _loop: boolean) {
+  // Always keep playlist as 'default' (looping) in AzuraCast.
+  // No-loop behavior is handled by radio-sync removing played tracks via SSE.
   await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}`,
     {
       method: 'PUT',
       headers: jsonHeaders,
       body: JSON.stringify({
-        type: loop ? 'default' : 'once_per_x_songs',
-        play_per_songs: loop ? 0 : 999,
-        avoid_duplicates: !loop,
+        type: 'default',
+        play_per_songs: 0,
+        avoid_duplicates: false,
       }),
     },
   )
+}
+
+export async function getMediaIdByTitle(searchTitle: string): Promise<number | null> {
+  const res = await apiCall(
+    `${BASE_URL}/api/station/${STATION_ID}/files/list?searchPhrase=${encodeURIComponent(searchTitle)}`,
+    { headers },
+  )
+  const files = await res.json()
+  const match = files.find((f: any) => f.media?.id != null && f.media.id > 0)
+  return match ? match.media.id : null
 }
 
 export async function emptyPlaylist(playlistId: number) {

@@ -24,6 +24,8 @@ const syncedFiles = new Map<string, { id: number; path: string }>()
 
 let currentTracks: RadioQueue['tracks'] = []
 let isFirstSync = true
+let loopEnabled = true
+let lastPlayedSongTitle = ''
 
 async function downloadFile(url: string): Promise<Buffer> {
   const res = await fetch(url)
@@ -34,6 +36,49 @@ function sanitizeFilename(title: string, url: string): string {
   const hash = url.split('/').pop()?.split('?')[0] || 'file'
   const clean = title.replace(/[^a-zA-Z0-9-_ ]/g, '').slice(0, 50)
   return `${clean}-${hash}`
+}
+
+// Normalize for fuzzy matching (same logic as frontend)
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/-[a-f0-9]{20,}$/i, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// Find the AzuraCast media ID for a song title by matching against synced files
+function findMediaIdBySongTitle(songTitle: string): number | null {
+  const norm = normalize(songTitle)
+
+  for (const [, { id, path }] of syncedFiles) {
+    const normPath = normalize(path)
+    if (normPath.includes(norm) || norm.includes(normPath)) return id
+  }
+
+  // Try matching against current track titles
+  for (const track of currentTracks) {
+    if (!track.audioUrl || !track.title) continue
+    const normTitle = normalize(track.title)
+    const normWords = norm.split(' ').filter((w) => w.length > 2)
+    const titleWords = normTitle.split(' ').filter((w) => w.length > 2)
+
+    // Substring match
+    if (normTitle.includes(norm) || norm.includes(normTitle)) {
+      const cached = syncedFiles.get(track.audioUrl)
+      if (cached) return cached.id
+    }
+
+    // Word overlap
+    const matchCount = normWords.filter((w) => normTitle.includes(w)).length
+    if (matchCount >= Math.max(1, normWords.length * 0.5) && matchCount >= Math.max(1, titleWords.length * 0.3)) {
+      const cached = syncedFiles.get(track.audioUrl)
+      if (cached) return cached.id
+    }
+  }
+
+  return null
 }
 
 // Resolve all tracks to AzuraCast media IDs (upload if needed)
@@ -81,6 +126,7 @@ async function resolveMediaIds(tracks: RadioQueue['tracks']): Promise<number[]> 
 export async function syncQueueToAzuraCast(queue: RadioQueue) {
   console.log(`[sync] Queue changed — ${queue.tracks.length} tracks`)
   currentTracks = queue.tracks
+  loopEnabled = queue.loopPlaylist ?? true
 
   const playlistId = await ensurePlaylist()
   const desiredIds = await resolveMediaIds(queue.tracks)
@@ -108,7 +154,7 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
       console.log(`[sync] Playlist already in sync (${currentIds.length} tracks)`)
       isFirstSync = false
       await setPlaylistSequential(playlistId)
-      await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+      await setPlaylistLoop(playlistId, loopEnabled)
       return
     }
 
@@ -118,13 +164,13 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
       await assignFileToPlaylist(id, playlistId)
     }
     await setPlaylistSequential(playlistId)
-    await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+    await setPlaylistLoop(playlistId, loopEnabled)
     if (!isFirstSync) {
       // Only clear queue on rebuilds after initial sync
       await clearUpcomingQueue()
     }
     isFirstSync = false
-    console.log(`[sync] Playlist rebuilt: ${desiredIds.length} tracks (sequential, loop=${queue.loopPlaylist ?? true})`)
+    console.log(`[sync] Playlist rebuilt: ${desiredIds.length} tracks (sequential, loop=${loopEnabled})`)
     return
   }
 
@@ -146,7 +192,7 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
 
   if (changed) {
     await setPlaylistSequential(playlistId)
-    await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+    await setPlaylistLoop(playlistId, loopEnabled)
     // Clear pre-generated queue so AzuraCast picks up the new tracks
     // instead of looping back to track 1 from its stale plan
     await clearUpcomingQueue()
@@ -159,15 +205,44 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
 // Settings-only update — no playlist rebuild, no interruption to playback
 export async function updatePlaylistSettings(queue: RadioQueue) {
   const playlistId = await ensurePlaylist()
-  const loop = queue.loopPlaylist ?? true
-  await setPlaylistLoop(playlistId, loop)
-  console.log(`[sync] Playlist loop updated to ${loop} (no rebuild)`)
+  const prevLoop = loopEnabled
+  loopEnabled = queue.loopPlaylist ?? true
+  await setPlaylistLoop(playlistId, loopEnabled)
+
+  // If switching FROM no-loop TO loop, clear upcoming queue so AzuraCast
+  // re-generates it with all remaining tracks (some may have been removed)
+  if (loopEnabled && !prevLoop) {
+    console.log(`[sync] Loop re-enabled — triggering full resync`)
+    await syncQueueToAzuraCast(queue)
+    return
+  }
+
+  console.log(`[sync] Playlist loop updated to ${loopEnabled} (no rebuild)`)
 }
 
-// Log-only SSE subscription — no Sanity writes
+// SSE subscription — removes played tracks from AzuraCast when loop is off
 export function startNowPlayingSubscription() {
-  subscribeNowPlaying((np) => {
+  subscribeNowPlaying(async (np) => {
     const song = np.now_playing.song
-    console.log(`[sse] Now playing: "${song.title}" by ${song.artist}`)
+    const currentTitle = song.title
+    console.log(`[sse] Now playing: "${currentTitle}" by ${song.artist}`)
+
+    // When loop is off and song changes, remove the previous song from the playlist
+    if (!loopEnabled && lastPlayedSongTitle && lastPlayedSongTitle !== currentTitle) {
+      const mediaId = findMediaIdBySongTitle(lastPlayedSongTitle)
+      if (mediaId) {
+        try {
+          await removeFileFromPlaylist(mediaId)
+          await clearUpcomingQueue()
+          console.log(`[sse] No-loop: removed played track "${lastPlayedSongTitle}" (media ID ${mediaId}) from playlist`)
+        } catch (err) {
+          console.error(`[sse] Failed to remove played track:`, err)
+        }
+      } else {
+        console.log(`[sse] No-loop: could not find media ID for "${lastPlayedSongTitle}" — skipping removal`)
+      }
+    }
+
+    lastPlayedSongTitle = currentTitle
   })
 }
