@@ -25,8 +25,17 @@ export interface NowPlayingEvent {
   }
 }
 
+async function apiCall(url: string, opts?: RequestInit): Promise<Response> {
+  const res = await fetch(url, opts)
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`AzuraCast API ${res.status}: ${url} — ${text}`)
+  }
+  return res
+}
+
 export async function getNowPlaying(): Promise<NowPlayingEvent> {
-  const res = await fetch(`${BASE_URL}/api/nowplaying/${STATION_ID}`, { headers })
+  const res = await apiCall(`${BASE_URL}/api/nowplaying/${STATION_ID}`, { headers })
   return res.json()
 }
 
@@ -68,7 +77,7 @@ export async function uploadMedia(
 ): Promise<{ id: number; path: string }> {
   const base64 = fileBuffer.toString('base64')
 
-  const res = await fetch(`${BASE_URL}/api/station/${STATION_ID}/files`, {
+  const res = await apiCall(`${BASE_URL}/api/station/${STATION_ID}/files`, {
     method: 'POST',
     headers: jsonHeaders,
     body: JSON.stringify({
@@ -77,14 +86,12 @@ export async function uploadMedia(
     }),
   })
 
-  const text = await res.text()
-  if (!res.ok) throw new Error(`Upload failed: ${res.status} ${text}`)
-  const data = JSON.parse(text)
+  const data = await res.json()
   return { id: data.id, path: data.path || `sync/${filename}` }
 }
 
 export async function ensurePlaylist(): Promise<number> {
-  const res = await fetch(
+  const res = await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/playlists`,
     { headers },
   )
@@ -93,7 +100,7 @@ export async function ensurePlaylist(): Promise<number> {
 
   if (existing) return existing.id
 
-  const createRes = await fetch(
+  const createRes = await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/playlists`,
     {
       method: 'POST',
@@ -116,7 +123,7 @@ export async function setPlaylistOrder(
   playlistId: number,
   mediaIds: number[],
 ) {
-  await fetch(
+  await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/order`,
     {
       method: 'PUT',
@@ -129,7 +136,7 @@ export async function setPlaylistOrder(
 }
 
 export async function assignFileToPlaylist(fileId: number, playlistId: number) {
-  await fetch(
+  await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/file/${fileId}`,
     {
       method: 'PUT',
@@ -140,7 +147,7 @@ export async function assignFileToPlaylist(fileId: number, playlistId: number) {
 }
 
 export async function setPlaylistSequential(playlistId: number) {
-  await fetch(
+  await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}`,
     {
       method: 'PUT',
@@ -151,7 +158,7 @@ export async function setPlaylistSequential(playlistId: number) {
 }
 
 export async function emptyPlaylist(playlistId: number) {
-  await fetch(
+  await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/empty`,
     {
       method: 'DELETE',
@@ -163,7 +170,7 @@ export async function emptyPlaylist(playlistId: number) {
 export async function findMediaByPath(
   path: string,
 ): Promise<{ id: number; path: string } | null> {
-  const res = await fetch(
+  const res = await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/files/list?currentDirectory=sync&searchPhrase=${encodeURIComponent(path)}`,
     { headers },
   )

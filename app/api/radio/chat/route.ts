@@ -5,8 +5,33 @@ const SANITY_DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET!
 const SANITY_API_TOKEN = process.env.SANITY_API_TOKEN!
 const SANITY_API_VERSION = process.env.NEXT_PUBLIC_SANITY_API_VERSION || '2026-03-10'
 
+// Rate limit: max 10 messages per minute per IP
+const rateMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 10
+const RATE_WINDOW = 60_000
+
+function checkRate(ip: string): boolean {
+  const now = Date.now()
+  const entry = rateMap.get(ip)
+  if (!entry || now > entry.resetAt) {
+    rateMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW })
+    return true
+  }
+  if (entry.count >= RATE_LIMIT) return false
+  entry.count++
+  return true
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || 'unknown'
+
+    if (!checkRate(ip)) {
+      return NextResponse.json({ error: 'Slow down — try again in a minute' }, { status: 429 })
+    }
+
     const { nickname, message } = await request.json()
 
     if (!nickname || !message) {
