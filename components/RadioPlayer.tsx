@@ -98,10 +98,13 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
     ? tracks[currentTrackIndex]?.label || tracks[currentTrackIndex]?.title || ''
     : ''
 
-  // Queue display: current track at top, only show from current onward
-  const visibleTracks = currentTrackIndex >= 0
+  // Queue display: upcoming tracks first (current at top), then played tracks at bottom
+  const upcomingTracks = currentTrackIndex >= 0
     ? tracks.slice(currentTrackIndex)
     : tracks
+  const playedTracks = currentTrackIndex > 0
+    ? tracks.slice(0, currentTrackIndex)
+    : []
 
   function togglePlay() {
     const audio = audioRef.current
@@ -193,21 +196,19 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
           </div>
         </div>
 
-        {visibleTracks.length > 0 && (
+        {tracks.length > 0 && (
           <div className="radio-tracklist">
-            <div className="radio-tracklist-header">
-              {currentTrackIndex >= 0 ? 'NOW PLAYING' : 'QUEUE'}
-            </div>
+            <div className="radio-tracklist-header">QUEUE</div>
             <ul>
-              {visibleTracks.map((track, i) => {
+              {upcomingTracks.map((track, i) => {
                 const isCurrentTrack = i === 0 && currentTrackIndex >= 0
                 return (
                   <li
-                    key={track._key || i}
+                    key={track._key || `up-${i}`}
                     className={isCurrentTrack ? 'radio-track radio-track-active' : 'radio-track'}
                   >
                     <span className="radio-track-num">
-                      {isCurrentTrack ? '▶' : String(i).padStart(2, '0')}
+                      {isCurrentTrack ? '▶' : ''}
                     </span>
                     <span className="radio-track-title">{track.label || track.title}</span>
                     {track.duration != null && track.duration > 0 && (
@@ -215,12 +216,23 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl }
                         {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
                       </span>
                     )}
-                    {track.status === 'pending' && (
-                      <span className="radio-track-pending">PENDING</span>
-                    )}
                   </li>
                 )
               })}
+              {playedTracks.length > 0 && (
+                <li className="radio-track-divider">PLAYED</li>
+              )}
+              {playedTracks.map((track, i) => (
+                <li key={track._key || `played-${i}`} className="radio-track radio-track-played">
+                  <span className="radio-track-num" />
+                  <span className="radio-track-title">{track.label || track.title}</span>
+                  {track.duration != null && track.duration > 0 && (
+                    <span className="radio-track-duration">
+                      {Math.floor(track.duration / 60)}:{String(Math.floor(track.duration % 60)).padStart(2, '0')}
+                    </span>
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
         )}
@@ -359,7 +371,7 @@ const styles = `
 }
 
 .radio-tracklist {
-  max-height: 40vh;
+  max-height: 200px;
   overflow-y: auto;
   border: 1px solid #e0e0e0;
   padding: 16px 20px;
@@ -421,12 +433,16 @@ const styles = `
   font-variant-numeric: tabular-nums;
 }
 
-.radio-track-pending {
+.radio-track-played {
+  opacity: 0.3 !important;
+}
+
+.radio-track-divider {
   font-size: 9px;
-  letter-spacing: 0.1em;
-  color: #ff8c00;
-  border: 1px solid #ff8c00;
-  padding: 1px 6px;
+  letter-spacing: 0.15em;
+  opacity: 0.3;
+  padding: 10px 0 4px;
+  list-style: none;
 }
 
 @media (max-width: 768px) {
