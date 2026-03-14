@@ -22,6 +22,7 @@ export default function RadioChat({ messages }: Props) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [optimistic, setOptimistic] = useState<ChatMessage[]>([])
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -61,15 +62,20 @@ export default function RadioChat({ messages }: Props) {
 
     saveNickname(name)
 
+    const fullMsg = replyTo
+      ? `↩ ${replyTo.nickname}: ${replyTo.message.slice(0, 40)}${replyTo.message.length > 40 ? '…' : ''} → ${msg}`
+      : msg
+
     // Optimistic update
     const tempId = `temp-${Date.now()}`
     setOptimistic((prev) => [...prev, {
       _id: tempId,
       nickname: name,
-      message: msg,
+      message: fullMsg,
       _createdAt: new Date().toISOString(),
     }])
     setInput('')
+    setReplyTo(null)
     setSending(true)
     requestAnimationFrame(() => inputRef.current?.focus())
 
@@ -77,7 +83,7 @@ export default function RadioChat({ messages }: Props) {
       await fetch('/api/radio/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: name, message: msg }),
+        body: JSON.stringify({ nickname: name, message: fullMsg }),
       })
     } catch {
       // Remove optimistic on failure
@@ -128,7 +134,16 @@ export default function RadioChat({ messages }: Props) {
           <div className="radio-chat-empty">No messages yet</div>
         )}
         {allMessages.map((msg) => (
-          <div key={msg._id} className="radio-chat-msg">
+          <div
+            key={msg._id}
+            className="radio-chat-msg"
+            onClick={() => {
+              if (nicknameSet) {
+                setReplyTo(msg)
+                inputRef.current?.focus()
+              }
+            }}
+          >
             <span className="radio-chat-author" style={{ color: avatarColor(msg.nickname) }}>
               {msg.nickname}
             </span>
@@ -137,6 +152,15 @@ export default function RadioChat({ messages }: Props) {
         ))}
         <div ref={messagesEndRef} />
       </div>
+      {replyTo && (
+        <div className="radio-chat-reply-bar">
+          <span className="radio-chat-reply-text">
+            ↩ <strong style={{ color: avatarColor(replyTo.nickname) }}>{replyTo.nickname}</strong>{' '}
+            {replyTo.message.slice(0, 50)}{replyTo.message.length > 50 ? '…' : ''}
+          </span>
+          <span className="radio-chat-reply-close" onClick={() => setReplyTo(null)}>✕</span>
+        </div>
+      )}
       <form onSubmit={nicknameSet ? handleSend : (e) => e.preventDefault()} className="radio-chat-form">
         {nicknameSet && (
           <input

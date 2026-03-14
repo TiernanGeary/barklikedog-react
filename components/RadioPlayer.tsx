@@ -631,6 +631,41 @@ const styles = `
   font-size: 11px;
   padding: 3px 0;
   line-height: 1.4;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.radio-chat-msg:hover {
+  background: rgba(0,0,0,0.03);
+}
+
+.radio-chat-reply-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 20px;
+  font-size: 10px;
+  opacity: 0.7;
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.radio-chat-reply-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.radio-chat-reply-close {
+  cursor: pointer;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.radio-chat-reply-close:hover {
+  opacity: 1;
 }
 
 .radio-chat-author {
