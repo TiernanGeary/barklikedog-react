@@ -207,6 +207,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
         </div>
 
         <div className="radio-bottom">
+        <div className="radio-left">
         {tracks.length > 0 && (
           <div className="radio-tracklist">
             <div className="radio-tracklist-header">QUEUE</div>
@@ -264,6 +265,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
         )}
 
         {uploadsEnabled && <RadioUpload />}
+        </div>
 
         <RadioChat messages={chatMessages} />
         </div>
@@ -405,13 +407,16 @@ const styles = `
   align-items: flex-start;
 }
 
+.radio-left {
+  width: 350px;
+  flex-shrink: 0;
+}
+
 .radio-tracklist {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid #e0e0e0;
   padding: 16px 20px;
-  width: 350px;
-  flex-shrink: 0;
 }
 
 .radio-tracklist-header {
@@ -495,7 +500,7 @@ const styles = `
     flex-direction: column;
   }
 
-  .radio-tracklist {
+  .radio-left {
     width: 100%;
   }
 
