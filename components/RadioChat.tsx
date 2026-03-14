@@ -18,6 +18,7 @@ const NICKNAME_KEY = 'radio-chat-nickname'
 
 export default function RadioChat({ messages }: Props) {
   const [nickname, setNickname] = useState('')
+  const [nicknameSet, setNicknameSet] = useState(false)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [optimistic, setOptimistic] = useState<ChatMessage[]>([])
@@ -25,7 +26,10 @@ export default function RadioChat({ messages }: Props) {
 
   useEffect(() => {
     const saved = localStorage.getItem(NICKNAME_KEY)
-    if (saved) setNickname(saved)
+    if (saved) {
+      setNickname(saved)
+      setNicknameSet(true)
+    }
   }, [])
 
   // Clear optimistic messages once they appear in server data
@@ -98,25 +102,45 @@ export default function RadioChat({ messages }: Props) {
         ))}
         <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSend} className="radio-chat-form">
-        <input
-          type="text"
-          value={nickname}
-          onChange={(e) => saveNickname(e.target.value)}
-          placeholder="Name"
-          className="radio-chat-name-input"
-          maxLength={20}
-        />
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={nickname.trim() ? 'Say something...' : 'Set a name first'}
-          className="radio-chat-input"
-          maxLength={280}
-          disabled={!nickname.trim() || sending}
-        />
-      </form>
+      {!nicknameSet ? (
+        <form onSubmit={(e) => {
+          e.preventDefault()
+          if (nickname.trim()) {
+            saveNickname(nickname.trim())
+            setNicknameSet(true)
+          }
+        }} className="radio-chat-form">
+          <input
+            type="text"
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            placeholder="Choose a name to chat..."
+            className="radio-chat-input"
+            maxLength={20}
+            autoFocus
+          />
+        </form>
+      ) : (
+        <form onSubmit={handleSend} className="radio-chat-form">
+          <span
+            className="radio-chat-name-tag"
+            onClick={() => setNicknameSet(false)}
+            title="Click to change name"
+            style={{ color: avatarColor(nickname) }}
+          >
+            {nickname}
+          </span>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Say something..."
+            className="radio-chat-input"
+            maxLength={280}
+            disabled={sending}
+          />
+        </form>
+      )}
     </div>
   )
 }

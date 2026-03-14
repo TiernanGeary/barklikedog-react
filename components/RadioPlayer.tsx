@@ -558,21 +558,17 @@ const styles = `
   margin-top: auto;
 }
 
-.radio-chat-name-input {
-  width: 60px;
+.radio-chat-name-tag {
   font-size: 11px;
-  padding: 6px 0;
-  border: none;
-  border-bottom: 1px solid #e0e0e0;
-  outline: none;
-  font-family: inherit;
-  color: #333;
   font-weight: bold;
+  padding: 6px 8px 6px 0;
+  cursor: pointer;
   flex-shrink: 0;
+  border-bottom: 1px solid transparent;
 }
 
-.radio-chat-name-input:focus {
-  border-bottom-color: #333;
+.radio-chat-name-tag:hover {
+  opacity: 0.7;
 }
 
 .radio-chat-input {
