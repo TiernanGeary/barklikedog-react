@@ -9,7 +9,8 @@ import { siteSettings } from './siteSettings'
 import { radioQueue } from './radioQueue'
 import { radioSettings } from './radioSettings'
 import { radioChatMessage } from './radioChatMessage'
+import { radioSkipVote } from './radioSkipVote'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [siteSettings, product, post, media, category, page, blockContent, radioQueue, radioSettings, radioChatMessage],
+  types: [siteSettings, product, post, media, category, page, blockContent, radioQueue, radioSettings, radioChatMessage, radioSkipVote],
 }

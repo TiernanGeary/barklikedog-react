@@ -19,15 +19,64 @@ interface Props {
   uploadsEnabled: boolean
   azuracastBaseUrl: string
   chatMessages: ChatMessage[]
+  skipVoteThreshold: number
+  skipVoteCount: number
+  skipVoteSong: string
 }
 
-export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages }: Props) {
+export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages, skipVoteThreshold, skipVoteCount, skipVoteSong }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
   const [muted, setMuted] = useState(false)
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1)
+  const [nowPlayingTitle, setNowPlayingTitle] = useState('')
   const [expandedTrack, setExpandedTrack] = useState<string | null>(null)
+  const [skipVoting, setSkipVoting] = useState(false)
+  const [hasVotedSkip, setHasVotedSkip] = useState(false)
+  const [localSkipCount, setLocalSkipCount] = useState(skipVoteCount)
+
+  // Sync skip vote count from server props
+  useEffect(() => {
+    setLocalSkipCount(skipVoteCount)
+  }, [skipVoteCount])
+
+  // Reset vote state when song changes
+  useEffect(() => {
+    if (nowPlayingTitle && skipVoteSong !== nowPlayingTitle) {
+      setHasVotedSkip(false)
+      setLocalSkipCount(0)
+    }
+  }, [nowPlayingTitle, skipVoteSong])
+
+  async function handleSkipVote() {
+    if (skipVoting || hasVotedSkip || !nowPlayingTitle || skipVoteThreshold === 0) return
+    setSkipVoting(true)
+    setLocalSkipCount((c) => c + 1)
+    setHasVotedSkip(true)
+    try {
+      const res = await fetch('/api/radio/skip-vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songTitle: nowPlayingTitle }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setLocalSkipCount(data.votes)
+      } else if (res.status === 409) {
+        setHasVotedSkip(true)
+      } else {
+        // Revert optimistic
+        setLocalSkipCount((c) => Math.max(0, c - 1))
+        setHasVotedSkip(false)
+      }
+    } catch {
+      setLocalSkipCount((c) => Math.max(0, c - 1))
+      setHasVotedSkip(false)
+    } finally {
+      setSkipVoting(false)
+    }
+  }
 
   // Normalize for fuzzy matching: lowercase, strip punctuation/hashes, collapse whitespace
   function normalize(s: string): string {
@@ -68,6 +117,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
   }
 
   function updateNowPlaying(songTitle: string) {
+    setNowPlayingTitle(songTitle)
     const idx = matchTrack(songTitle)
     if (idx >= 0) {
       setCurrentTrackIndex((prev) => {
@@ -199,6 +249,16 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
           <span className="radio-live-label">LIVE</span>
           {nowPlaying && (
             <span className="radio-now-title">Currently Playing: {nowPlaying}</span>
+          )}
+          {skipVoteThreshold > 0 && nowPlaying && (
+            <button
+              className={`radio-skip-btn${hasVotedSkip ? ' radio-skip-voted' : ''}`}
+              onClick={handleSkipVote}
+              disabled={skipVoting || hasVotedSkip}
+              title={hasVotedSkip ? 'Already voted' : `Vote to skip (${localSkipCount}/${skipVoteThreshold})`}
+            >
+              SKIP {localSkipCount}/{skipVoteThreshold}
+            </button>
           )}
         </div>
 
@@ -363,6 +423,35 @@ const styles = `
 
 .radio-now-title {
   font-size: 13px;
+}
+
+.radio-skip-btn {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border: 1px solid #e0e0e0;
+  background: transparent;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.radio-skip-btn:hover:not(:disabled) {
+  border-color: #ff3700;
+  color: #ff3700;
+}
+
+.radio-skip-btn:disabled {
+  cursor: default;
+}
+
+.radio-skip-btn.radio-skip-voted {
+  opacity: 0.4;
+  border-color: #ccc;
 }
 
 .radio-controls {

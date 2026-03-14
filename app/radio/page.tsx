@@ -19,18 +19,24 @@ const RADIO_QUEUE_QUERY = `*[_type == "radioQueue"][0] {
 }`
 
 const RADIO_SETTINGS_QUERY = `*[_type == "radioSettings"][0] {
-  uploadsEnabled
+  uploadsEnabled,
+  skipVoteThreshold
 }`
 
 const RADIO_CHAT_QUERY = `*[_type == "radioChatMessage"] | order(_createdAt desc) [0..49] {
   _id, nickname, message, _createdAt
 } | order(_createdAt asc)`
 
+const SKIP_VOTE_QUERY = `*[_type == "radioSkipVote" && _id == "radioSkipVote"][0] {
+  songTitle, voteCount
+}`
+
 export default async function RadioPage() {
-  const [{ data: queue }, { data: settings }, { data: chatMessages }] = await Promise.all([
+  const [{ data: queue }, { data: settings }, { data: chatMessages }, { data: skipVote }] = await Promise.all([
     sanityFetch({ query: RADIO_QUEUE_QUERY }),
     sanityFetch({ query: RADIO_SETTINGS_QUERY }),
     sanityFetch({ query: RADIO_CHAT_QUERY }),
+    sanityFetch({ query: SKIP_VOTE_QUERY }),
   ])
 
   return (
@@ -39,6 +45,9 @@ export default async function RadioPage() {
       uploadsEnabled={settings?.uploadsEnabled ?? true}
       azuracastBaseUrl={process.env.NEXT_PUBLIC_AZURACAST_SSE_URL || 'https://radio.barklike.dog'}
       chatMessages={chatMessages ?? []}
+      skipVoteThreshold={settings?.skipVoteThreshold ?? 3}
+      skipVoteCount={skipVote?.voteCount ?? 0}
+      skipVoteSong={skipVote?.songTitle ?? ''}
     />
   )
 }

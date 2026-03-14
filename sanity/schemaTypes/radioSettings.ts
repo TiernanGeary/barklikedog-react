@@ -28,6 +28,14 @@ export const radioSettings = defineType({
       description: 'When disabled, listeners cannot add tracks',
       initialValue: true,
     }),
+    defineField({
+      name: 'skipVoteThreshold',
+      title: 'Skip Vote Threshold',
+      type: 'number',
+      description: 'Number of votes needed to skip a song (0 = disabled)',
+      initialValue: 3,
+      validation: (rule) => rule.min(0).max(50),
+    }),
   ],
   preview: {
     prepare() {
