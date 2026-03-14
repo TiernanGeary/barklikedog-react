@@ -1,15 +1,21 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import type { YouTubeResult } from '@/lib/types'
 
 const UPLOAD_PROXY = process.env.NEXT_PUBLIC_UPLOAD_PROXY_URL || ''
 const MAX_DURATION = 300 // 5 minutes
 
 export default function RadioUpload() {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<'search' | 'upload'>('search')
   const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
+  function onTrackAdded() {
+    router.refresh()
+  }
 
   if (!open) {
     return (
@@ -39,9 +45,9 @@ export default function RadioUpload() {
       </div>
 
       {tab === 'search' ? (
-        <SearchTab result={result} setResult={setResult} />
+        <SearchTab result={result} setResult={setResult} onTrackAdded={onTrackAdded} />
       ) : (
-        <UploadTab result={result} setResult={setResult} />
+        <UploadTab result={result} setResult={setResult} onTrackAdded={onTrackAdded} />
       )}
     </div>
   )
@@ -52,9 +58,11 @@ export default function RadioUpload() {
 function SearchTab({
   result,
   setResult,
+  onTrackAdded,
 }: {
   result: { type: 'success' | 'error'; message: string } | null
   setResult: (r: { type: 'success' | 'error'; message: string } | null) => void
+  onTrackAdded: () => void
 }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<YouTubeResult[]>([])
@@ -126,6 +134,7 @@ function SearchTab({
       } else {
         const msg = data.status === 'approved' ? 'Added to queue!' : 'Submitted for approval'
         setResult({ type: 'success', message: msg })
+        onTrackAdded()
       }
     } catch {
       setResult({ type: 'error', message: 'Extraction failed' })
@@ -196,9 +205,11 @@ function SearchTab({
 function UploadTab({
   result,
   setResult,
+  onTrackAdded,
 }: {
   result: { type: 'success' | 'error'; message: string } | null
   setResult: (r: { type: 'success' | 'error'; message: string } | null) => void
+  onTrackAdded: () => void
 }) {
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
@@ -283,6 +294,7 @@ function UploadTab({
         setFile(null)
         setTitle('')
         if (fileRef.current) fileRef.current.value = ''
+        onTrackAdded()
       }
     } catch {
       setResult({ type: 'error', message: 'Upload failed' })
