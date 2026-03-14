@@ -2,6 +2,9 @@
 
 import { useState, useRef } from 'react'
 
+const SANITY_PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!
+const SANITY_DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET!
+
 export default function RadioUpload() {
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
@@ -16,12 +19,41 @@ export default function RadioUpload() {
     setUploading(true)
     setResult(null)
 
-    const form = new FormData()
-    form.append('file', file)
-    form.append('title', title.trim())
-
     try {
-      const res = await fetch('/api/radio/upload', { method: 'POST', body: form })
+      // Step 1: Upload file directly to Sanity CDN (bypasses Vercel body limit)
+      const uploadRes = await fetch(
+        `https://${SANITY_PROJECT_ID}.api.sanity.io/v2026-03-10/assets/files/${SANITY_DATASET}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': file.type,
+            'Content-Disposition': `attachment; filename="${file.name}"`,
+          },
+          body: file,
+        },
+      )
+
+      if (!uploadRes.ok) {
+        setResult({ type: 'error', message: 'Failed to upload file' })
+        return
+      }
+
+      const uploadData = await uploadRes.json()
+      const assetId = uploadData.document._id
+
+      // Step 2: Tell our API to create the media doc and queue it
+      const res = await fetch('/api/radio/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          assetId,
+          filename: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+        }),
+      })
+
       const data = await res.json()
 
       if (!res.ok) {

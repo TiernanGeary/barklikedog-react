@@ -17,7 +17,6 @@ const RATE_LIMIT_MAX = 5
 function isRateLimited(ip: string): boolean {
   const now = Date.now()
   const timestamps = uploadTimestamps.get(ip) || []
-  // Prune timestamps outside the window
   const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
   uploadTimestamps.set(ip, recent)
 
@@ -29,11 +28,21 @@ function isRateLimited(ip: string): boolean {
   return false
 }
 
+const ALLOWED_TYPES = [
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/ogg',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/flac',
+  'audio/aac',
+  'audio/webm',
+]
+
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || 'unknown'
 
-    // Rate limit check
     if (isRateLimited(ip)) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Maximum 5 uploads per hour.' },
@@ -41,30 +50,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Parse FormData
-    const formData = await request.formData()
-    const file = formData.get('file') as File | null
-    const title = formData.get('title') as string | null
+    const { title, assetId, filename, fileSize, mimeType } = await request.json()
 
-    if (!file || !title) {
+    if (!title || !assetId) {
       return NextResponse.json(
-        { error: 'Missing required fields: file and title' },
+        { error: 'Missing required fields: title and assetId' },
         { status: 400 },
       )
     }
 
-    // Validate mime type — only common audio formats
-    const ALLOWED_TYPES = [
-      'audio/mpeg',       // .mp3
-      'audio/mp4',        // .m4a
-      'audio/ogg',        // .ogg
-      'audio/wav',        // .wav
-      'audio/x-wav',      // .wav (alt)
-      'audio/flac',       // .flac
-      'audio/aac',        // .aac
-      'audio/webm',       // .webm
-    ]
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    // Validate mime type
+    if (mimeType && !ALLOWED_TYPES.includes(mimeType)) {
       return NextResponse.json(
         { error: 'Invalid file type. Accepted: MP3, M4A, OGG, WAV, FLAC, AAC, WebM.' },
         { status: 400 },
@@ -80,22 +76,14 @@ export async function POST(request: NextRequest) {
     const maxUploadSizeMB = settings?.maxUploadSizeMB ?? 50
     const maxBytes = maxUploadSizeMB * 1024 * 1024
 
-    // Validate file size
-    if (file.size > maxBytes) {
+    if (fileSize && fileSize > maxBytes) {
       return NextResponse.json(
         { error: `File too large. Maximum size is ${maxUploadSizeMB}MB.` },
         { status: 400 },
       )
     }
 
-    // Upload file to Sanity
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const asset = await client.assets.upload('file', buffer, {
-      filename: file.name,
-      contentType: file.type,
-    })
-
-    // Create media document
+    // Create media document using the already-uploaded asset
     const status = settings?.moderationEnabled ? 'pending' : 'approved'
     const mediaDoc = await client.create({
       _type: 'media',
@@ -110,7 +98,7 @@ export async function POST(request: NextRequest) {
       mediaType: 'audio',
       audioFile: {
         _type: 'file',
-        asset: { _type: 'reference', _ref: asset._id },
+        asset: { _type: 'reference', _ref: assetId },
       },
       uploadedBy: 'listener',
       status,
