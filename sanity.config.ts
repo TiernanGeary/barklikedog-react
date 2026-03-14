@@ -21,7 +21,7 @@ export default defineConfig({
   schema,
   document: {
     actions: (prev, context) => {
-      if (context.schemaType === 'radioQueue') {
+      if (context.schemaType === 'radioQueue' || context.schemaType === 'radioSettings') {
         return [skipTrackAction, ...prev]
       }
       return prev
