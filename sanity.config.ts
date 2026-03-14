@@ -12,13 +12,21 @@ import {structureTool} from 'sanity/structure'
 import {apiVersion, dataset, projectId} from './sanity/env'
 import {schema} from './sanity/schemaTypes'
 import {structure} from './sanity/structure'
+import {skipTrackAction} from './sanity/actions/skipTrack'
 
 export default defineConfig({
   basePath: '/studio',
   projectId,
   dataset,
-  // Add and edit the content schema in the './sanity/schemaTypes' folder
   schema,
+  document: {
+    actions: (prev, context) => {
+      if (context.schemaType === 'radioQueue') {
+        return [skipTrackAction, ...prev]
+      }
+      return prev
+    },
+  },
   plugins: [
     structureTool({structure}),
     // Vision is for querying with GROQ from inside the Studio

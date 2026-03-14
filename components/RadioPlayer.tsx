@@ -17,18 +17,8 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
   const [volume, setVolume] = useState(0.8)
   const [muted, setMuted] = useState(false)
 
-  const [skipping, setSkipping] = useState(false)
-
   const activeTrack = tracks[currentTrackIndex]
   const nowPlaying = activeTrack?.label || activeTrack?.title || ''
-
-  async function handleSkip() {
-    setSkipping(true)
-    try {
-      await fetch('/api/radio/skip', { method: 'POST' })
-    } catch {}
-    setTimeout(() => setSkipping(false), 2000)
-  }
 
   function togglePlay() {
     const audio = audioRef.current
@@ -97,15 +87,6 @@ export default function RadioPlayer({ tracks, currentTrackIndex }: Props) {
             ) : (
               <span className="radio-icon-play" />
             )}
-          </button>
-
-          <button
-            className="radio-skip-btn"
-            onClick={handleSkip}
-            disabled={skipping}
-            aria-label="Skip"
-          >
-            <span className="radio-icon-skip" />
           </button>
 
           <div className="radio-volume">
@@ -262,45 +243,6 @@ const styles = `
   background: #333333;
 }
 
-.radio-skip-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  transition: opacity 0.2s;
-}
-
-.radio-skip-btn:hover:not(:disabled) {
-  opacity: 0.6;
-}
-
-.radio-skip-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.radio-icon-skip {
-  display: block;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 7px 0 7px 10px;
-  border-color: transparent transparent transparent #333333;
-  position: relative;
-}
-
-.radio-icon-skip::after {
-  content: '';
-  display: block;
-  width: 3px;
-  height: 14px;
-  background: #333333;
-  position: absolute;
-  top: -7px;
-  left: 2px;
-}
 
 .radio-volume {
   display: flex;
