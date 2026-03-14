@@ -7,9 +7,9 @@ import {
   ensurePlaylist,
   uploadMedia,
   findMediaByPath,
-  setPlaylistOrder,
   assignFileToPlaylist,
   setPlaylistSequential,
+  setPlaylistLoop,
   emptyPlaylist,
   subscribeNowPlaying,
   type NowPlayingEvent,
@@ -87,7 +87,8 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
     await assignFileToPlaylist(id, playlistId)
   }
   await setPlaylistSequential(playlistId)
-  console.log(`[sync] Playlist updated: ${mediaIds.length} tracks (sequential)`)
+  await setPlaylistLoop(playlistId, queue.loopPlaylist ?? true)
+  console.log(`[sync] Playlist updated: ${mediaIds.length} tracks (sequential, loop=${queue.loopPlaylist ?? true})`)
 }
 
 // Log-only SSE subscription — no Sanity writes

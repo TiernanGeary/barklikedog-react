@@ -179,6 +179,24 @@ export async function setPlaylistSequential(playlistId: number) {
   )
 }
 
+export async function setPlaylistLoop(playlistId: number, loop: boolean) {
+  // When loop is off: play_per_songs=1 means "play once per cycle" —
+  // combined with sequential order, it plays through once then stops
+  // When loop is on: play_per_songs=0 means no restriction (default looping)
+  await apiCall(
+    `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}`,
+    {
+      method: 'PUT',
+      headers: jsonHeaders,
+      body: JSON.stringify({
+        type: loop ? 'default' : 'once_per_x_songs',
+        play_per_songs: loop ? 0 : 999,
+        avoid_duplicates: !loop,
+      }),
+    },
+  )
+}
+
 export async function emptyPlaylist(playlistId: number) {
   await apiCall(
     `${BASE_URL}/api/station/${STATION_ID}/playlist/${playlistId}/empty`,

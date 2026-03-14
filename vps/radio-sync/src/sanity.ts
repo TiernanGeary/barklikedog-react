@@ -36,7 +36,7 @@ export async function fetchQueue(): Promise<RadioQueue | null> {
   return sanityClient.fetch(QUEUE_QUERY)
 }
 
-let lastTrackKeys = ''
+let lastFingerprint = ''
 
 export function listenToQueue(callback: (queue: RadioQueue) => void) {
   const subscription = sanityClient
@@ -44,10 +44,11 @@ export function listenToQueue(callback: (queue: RadioQueue) => void) {
     .subscribe(() => {
       fetchQueue().then((queue) => {
         if (!queue) return
-        const newKeys = (queue.tracks ?? []).map((t) => t._key).join(',')
-        if (newKeys !== lastTrackKeys) {
-          lastTrackKeys = newKeys
-          console.log('[sanity] Track list changed, triggering sync')
+        const keys = (queue.tracks ?? []).map((t) => t._key).join(',')
+        const fingerprint = `${keys}|loop=${queue.loopPlaylist}`
+        if (fingerprint !== lastFingerprint) {
+          lastFingerprint = fingerprint
+          console.log('[sanity] Queue changed, triggering sync')
           callback(queue)
         }
       })
