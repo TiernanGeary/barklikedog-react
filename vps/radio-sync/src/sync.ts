@@ -145,8 +145,14 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
   const toAdd = desiredIds.filter((id) => !currentSet.has(id))
   const toRemove = currentIds.filter((id) => !desiredSet.has(id))
   // Only flag order change if tracks that exist in BOTH lists changed relative order
+  // Deduplicate to handle same media appearing multiple times in Sanity queue
   const commonCurrent = currentIds.filter((id) => desiredSet.has(id))
-  const commonDesired = desiredIds.filter((id) => currentSet.has(id))
+  const seen = new Set<number>()
+  const commonDesired = desiredIds.filter((id) => {
+    if (!currentSet.has(id) || seen.has(id)) return false
+    seen.add(id)
+    return true
+  })
   const orderChanged = commonCurrent.length > 0 &&
     JSON.stringify(commonCurrent) !== JSON.stringify(commonDesired)
 
