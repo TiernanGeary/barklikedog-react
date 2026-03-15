@@ -26,7 +26,9 @@ interface Props {
 
 export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages, skipVoteThreshold, skipVoteCount, skipVoteSong }: Props) {
   const VIDEO_BASE = 'http://87.99.129.139:8443/videos'
-  const VIDEOS = [
+  // timezone: sync video position to time-of-day in that timezone (for 24hr videos)
+  // loops: how many times to play before cycling to next (for short clips)
+  const VIDEOS: { src: string; loops?: number; timezone?: string }[] = [
     { src: `${VIDEO_BASE}/djloop.mp4`, loops: 10 },
     { src: `${VIDEO_BASE}/gate-video.mp4`, loops: 10 },
   ]
@@ -34,6 +36,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
   const [videoIndex, setVideoIndex] = useState(0)
   const [videoFade, setVideoFade] = useState(true)
   const loopCount = useRef(0)
+  const timeSynced = useRef(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
@@ -236,28 +239,61 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
         <video
           ref={videoRef}
           autoPlay
+          loop={!!VIDEOS[videoIndex].timezone}
           muted
           playsInline
           disablePictureInPicture
           controlsList="nodownload nofullscreen noremoteplayback"
           onContextMenu={(e) => e.preventDefault()}
-          onCanPlay={() => setVideoFade(true)}
+          onCanPlay={() => {
+            const v = videoRef.current
+            const current = VIDEOS[videoIndex]
+            // Timezone-synced video: seek to current time-of-day
+            if (current.timezone && v && !timeSynced.current) {
+              const now = new Date()
+              const tz = new Intl.DateTimeFormat('en-US', {
+                timeZone: current.timezone,
+                hour: 'numeric', minute: 'numeric', second: 'numeric',
+                hour12: false,
+              }).formatToParts(now)
+              const h = parseInt(tz.find((p) => p.type === 'hour')?.value || '0')
+              const m = parseInt(tz.find((p) => p.type === 'minute')?.value || '0')
+              const s = parseInt(tz.find((p) => p.type === 'second')?.value || '0')
+              const secondsSinceMidnight = h * 3600 + m * 60 + s
+              if (v.duration && secondsSinceMidnight < v.duration) {
+                v.currentTime = secondsSinceMidnight
+              }
+              timeSynced.current = true
+            }
+            setVideoFade(true)
+          }}
           onTimeUpdate={() => {
             const v = videoRef.current
+            const current = VIDEOS[videoIndex]
             if (!v || !v.duration) return
+            // Timezone videos loop naturally (24hr), no cycling
+            if (current.timezone) return
             const remaining = v.duration - v.currentTime
             // When near end of final loop, fade out early
-            if (remaining <= 0.6 && loopCount.current >= VIDEOS[videoIndex].loops - 1 && videoFade) {
+            if (remaining <= 0.6 && loopCount.current >= (current.loops || 1) - 1 && videoFade) {
               setVideoFade(false)
             }
           }}
           onEnded={() => {
+            const current = VIDEOS[videoIndex]
+            // Timezone video: just loop from start
+            if (current.timezone) {
+              const v = videoRef.current
+              if (v) { v.currentTime = 0; v.play() }
+              return
+            }
             loopCount.current++
-            if (loopCount.current < VIDEOS[videoIndex].loops) {
+            if (loopCount.current < (current.loops || 1)) {
               const v = videoRef.current
               if (v) { v.currentTime = 0; v.play() }
             } else {
               loopCount.current = 0
+              timeSynced.current = false
               // Video already faded out via onTimeUpdate — switch after fade completes
               setTimeout(() => {
                 setVideoIndex((i) => (i + 1) % VIDEOS.length)
