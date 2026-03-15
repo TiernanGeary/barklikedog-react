@@ -1,5 +1,7 @@
 'use client'
 
+import VideoStream from '@/components/VideoStream'
+
 export default function GatePage() {
   return (
     <div className="gate-page">
@@ -7,18 +9,7 @@ export default function GatePage() {
 
       {/* Video background */}
       <div className="gate-video-wrap">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          disablePictureInPicture
-          controlsList="nodownload nofullscreen noremoteplayback"
-          onContextMenu={(e) => e.preventDefault()}
-          style={{ pointerEvents: 'none' }}
-        >
-          <source src="/gate-video.mp4" type="video/mp4" />
-        </video>
+        <VideoStream style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
       </div>
 
       <div className="gate-footer">

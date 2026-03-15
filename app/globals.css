@@ -188,6 +188,16 @@ body {
    HOMEPAGE / FRONT PAGE
    ========================================================================== */
 
+.home-video-wrap {
+  max-height: 45vh;
+  background: #ffffff;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+  margin-bottom: 20px;
+}
+
 .front-page-content {
   min-height: 60vh;
   display: flex;

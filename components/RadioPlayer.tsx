@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 import type { RadioTrack } from '@/lib/types'
 import RadioUpload from './RadioUpload'
 import RadioChat from './RadioChat'
+import VideoStream from './VideoStream'
 
 const STREAM_URL = process.env.NEXT_PUBLIC_RADIO_STREAM_URL || ''
 
@@ -25,19 +26,6 @@ interface Props {
 }
 
 export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages, skipVoteThreshold, skipVoteCount, skipVoteSong }: Props) {
-  const VIDEO_STREAM = 'http://87.99.129.139:8443/stream/stream.m3u8'
-  const VIDEO_BASE = 'http://87.99.129.139:8443/videos'
-  // Fallback clips shown while HLS stream loads or if unavailable
-  const FALLBACK_VIDEOS = [
-    { src: `${VIDEO_BASE}/djloop.mp4`, loops: 10 },
-    { src: `${VIDEO_BASE}/gate-video.mp4`, loops: 10 },
-  ]
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const hlsRef = useRef<any>(null)
-  const [useStream, setUseStream] = useState(true)
-  const [videoIndex, setVideoIndex] = useState(0)
-  const [videoFade, setVideoFade] = useState(true)
-  const loopCount = useRef(0)
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
@@ -48,46 +36,6 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
   const [skipVoting, setSkipVoting] = useState(false)
   const [hasVotedSkip, setHasVotedSkip] = useState(false)
   const [localSkipCount, setLocalSkipCount] = useState(skipVoteCount)
-
-  // HLS stream setup
-  useEffect(() => {
-    if (!useStream || !videoRef.current) return
-    const video = videoRef.current
-
-    // Native HLS support (Safari)
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = VIDEO_STREAM
-      video.play().catch(() => {})
-      return
-    }
-
-    // Use hls.js for other browsers
-    let hls: any = null
-    import('hls.js').then((Hls) => {
-      const HlsClass = Hls.default
-      if (!HlsClass.isSupported()) {
-        setUseStream(false)
-        return
-      }
-      hls = new HlsClass()
-      hlsRef.current = hls
-      hls.loadSource(VIDEO_STREAM)
-      hls.attachMedia(video)
-      hls.on(HlsClass.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {})
-      })
-      hls.on(HlsClass.Events.ERROR, (_: any, data: any) => {
-        if (data.fatal) {
-          console.log('[video] HLS fatal error, falling back to clips')
-          setUseStream(false)
-        }
-      })
-    }).catch(() => setUseStream(false))
-
-    return () => {
-      if (hls) { hls.destroy(); hlsRef.current = null }
-    }
-  }, [useStream])
 
   // Sync skip vote count from server props
   useEffect(() => {
@@ -277,53 +225,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
 
       {/* Video */}
       <div className="radio-video-wrap">
-        {useStream ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            disablePictureInPicture
-            controlsList="nodownload nofullscreen noremoteplayback"
-            onContextMenu={(e) => e.preventDefault()}
-            style={{ pointerEvents: 'none', opacity: 1, transition: 'opacity 0.5s ease' }}
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            disablePictureInPicture
-            controlsList="nodownload nofullscreen noremoteplayback"
-            onContextMenu={(e) => e.preventDefault()}
-            onCanPlay={() => setVideoFade(true)}
-            onTimeUpdate={() => {
-              const v = videoRef.current
-              const current = FALLBACK_VIDEOS[videoIndex]
-              if (!v || !v.duration) return
-              const remaining = v.duration - v.currentTime
-              if (remaining <= 0.6 && loopCount.current >= (current.loops || 1) - 1 && videoFade) {
-                setVideoFade(false)
-              }
-            }}
-            onEnded={() => {
-              const current = FALLBACK_VIDEOS[videoIndex]
-              loopCount.current++
-              if (loopCount.current < (current.loops || 1)) {
-                const v = videoRef.current
-                if (v) { v.currentTime = 0; v.play() }
-              } else {
-                loopCount.current = 0
-                setTimeout(() => {
-                  setVideoIndex((i) => (i + 1) % FALLBACK_VIDEOS.length)
-                }, 100)
-              }
-            }}
-            src={FALLBACK_VIDEOS[videoIndex].src}
-            style={{ pointerEvents: 'none', opacity: videoFade ? 1 : 0, transition: 'opacity 0.5s ease' }}
-          />
-        )}
+        <VideoStream style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
       </div>
 
       {/* Audio stream */}
