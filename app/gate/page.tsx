@@ -7,9 +7,9 @@ export default function GatePage() {
     <div className="gate-page">
       <style>{styles}</style>
 
-      {/* Video background */}
+      {/* Video centered */}
       <div className="gate-video-wrap">
-        <VideoStream style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+        <VideoStream style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', display: 'block' }} />
       </div>
 
       <div className="gate-footer">
@@ -39,17 +39,12 @@ const styles = `
 .gate-video-wrap {
   position: absolute;
   inset: 0;
+  bottom: 60px;
   z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.gate-video-wrap video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
+  pointer-events: none;
 }
 
 @keyframes gate-rise {
