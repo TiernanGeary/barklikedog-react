@@ -144,8 +144,11 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
 
   const toAdd = desiredIds.filter((id) => !currentSet.has(id))
   const toRemove = currentIds.filter((id) => !desiredSet.has(id))
-  const orderChanged = currentIds.length > 0 &&
-    JSON.stringify(currentIds.filter((id) => desiredSet.has(id))) !== JSON.stringify(desiredIds.filter((id) => currentSet.has(id)))
+  // Only flag order change if tracks that exist in BOTH lists changed relative order
+  const commonCurrent = currentIds.filter((id) => desiredSet.has(id))
+  const commonDesired = desiredIds.filter((id) => currentSet.has(id))
+  const orderChanged = commonCurrent.length > 0 &&
+    JSON.stringify(commonCurrent) !== JSON.stringify(commonDesired)
 
   // First sync or major reorder — full rebuild needed
   if (isFirstSync || orderChanged) {
