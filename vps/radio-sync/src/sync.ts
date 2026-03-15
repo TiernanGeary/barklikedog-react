@@ -14,6 +14,8 @@ import {
   setPlaylistLoop,
   emptyPlaylist,
   clearUpcomingQueue,
+  getNowPlaying,
+  skipTrack,
   subscribeNowPlaying,
   type NowPlayingEvent,
 } from './azuracast.js'
@@ -167,6 +169,19 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
       return
     }
 
+    // Remember what's currently playing so we can skip back to it
+    let nowPlayingMediaId: number | null = null
+    if (!isFirstSync) {
+      try {
+        const np = await getNowPlaying()
+        const songTitle = np.now_playing?.song?.title
+        if (songTitle) {
+          nowPlayingMediaId = findMediaIdBySongTitle(songTitle)
+          console.log(`[sync] Currently playing: "${songTitle}" (media ID ${nowPlayingMediaId})`)
+        }
+      } catch { /* ignore */ }
+    }
+
     console.log(`[sync] Full rebuild: ${orderChanged ? 'order changed' : 'initial sync'}`)
     await emptyPlaylist(playlistId)
     for (const id of desiredIds) {
@@ -175,9 +190,24 @@ export async function syncQueueToAzuraCast(queue: RadioQueue) {
     await setPlaylistSequential(playlistId)
     await setPlaylistLoop(playlistId, loopEnabled)
     if (!isFirstSync) {
-      // Only clear queue on rebuilds after initial sync
       await clearUpcomingQueue()
     }
+
+    // Skip forward to where we were playing
+    if (nowPlayingMediaId && !isFirstSync) {
+      const targetIndex = desiredIds.indexOf(nowPlayingMediaId)
+      if (targetIndex > 0) {
+        console.log(`[sync] Skipping to track ${targetIndex + 1}/${desiredIds.length} to resume position`)
+        for (let i = 0; i < targetIndex; i++) {
+          await skipTrack()
+          // Small delay to let AzuraCast process each skip
+          await new Promise((r) => setTimeout(r, 300))
+        }
+        await clearUpcomingQueue()
+        console.log(`[sync] Resumed at track ${targetIndex + 1}`)
+      }
+    }
+
     isFirstSync = false
     console.log(`[sync] Playlist rebuilt: ${desiredIds.length} tracks (sequential, loop=${loopEnabled})`)
     return

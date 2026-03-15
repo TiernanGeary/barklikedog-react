@@ -255,6 +255,13 @@ export async function clearUpcomingQueue() {
   }
 }
 
+export async function skipTrack() {
+  await apiCall(
+    `${BASE_URL}/api/station/${STATION_ID}/backend/skip`,
+    { method: 'POST', headers },
+  )
+}
+
 export async function findMediaByPath(
   filename: string,
 ): Promise<{ id: number; path: string } | null> {
