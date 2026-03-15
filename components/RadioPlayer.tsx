@@ -241,18 +241,26 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
           controlsList="nodownload nofullscreen noremoteplayback"
           onContextMenu={(e) => e.preventDefault()}
           onCanPlay={() => setVideoFade(true)}
+          onTimeUpdate={() => {
+            const v = videoRef.current
+            if (!v || !v.duration) return
+            const remaining = v.duration - v.currentTime
+            // When near end of final loop, fade out early
+            if (remaining <= 0.6 && loopCount.current >= VIDEOS[videoIndex].loops - 1 && videoFade) {
+              setVideoFade(false)
+            }
+          }}
           onEnded={() => {
             loopCount.current++
             if (loopCount.current < VIDEOS[videoIndex].loops) {
-              // Replay same video
-              videoRef.current?.play()
+              const v = videoRef.current
+              if (v) { v.currentTime = 0; v.play() }
             } else {
-              // Fade out, switch to next video
               loopCount.current = 0
-              setVideoFade(false)
+              // Video already faded out via onTimeUpdate — switch after fade completes
               setTimeout(() => {
                 setVideoIndex((i) => (i + 1) % VIDEOS.length)
-              }, 500)
+              }, 100)
             }
           }}
           src={VIDEOS[videoIndex].src}
