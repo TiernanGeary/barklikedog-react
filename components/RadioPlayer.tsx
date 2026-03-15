@@ -25,6 +25,10 @@ interface Props {
 }
 
 export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages, skipVoteThreshold, skipVoteCount, skipVoteSong }: Props) {
+  const VIDEOS = ['/djloop.mp4', '/gate-video.mp4']
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [videoIndex, setVideoIndex] = useState(0)
+  const [videoFade, setVideoFade] = useState(true)
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
@@ -225,18 +229,23 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
       {/* Video */}
       <div className="radio-video-wrap">
         <video
+          ref={videoRef}
           autoPlay
-          loop
           muted
           playsInline
           disablePictureInPicture
           controlsList="nodownload nofullscreen noremoteplayback"
           onContextMenu={(e) => e.preventDefault()}
-          onCanPlay={(e) => (e.currentTarget.style.opacity = '1')}
-          style={{ pointerEvents: 'none', opacity: 0, transition: 'opacity 0.5s ease' }}
-        >
-          <source src="/djloop.mp4" type="video/mp4" />
-        </video>
+          onCanPlay={() => setVideoFade(true)}
+          onEnded={() => {
+            setVideoFade(false)
+            setTimeout(() => {
+              setVideoIndex((i) => (i + 1) % VIDEOS.length)
+            }, 500)
+          }}
+          src={VIDEOS[videoIndex]}
+          style={{ pointerEvents: 'none', opacity: videoFade ? 1 : 0, transition: 'opacity 0.5s ease' }}
+        />
       </div>
 
       {/* Audio stream */}
