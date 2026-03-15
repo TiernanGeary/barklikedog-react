@@ -25,9 +25,10 @@ interface Props {
 }
 
 export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages, skipVoteThreshold, skipVoteCount, skipVoteSong }: Props) {
+  const VIDEO_BASE = 'http://87.99.129.139:8443/videos'
   const VIDEOS = [
-    { src: '/djloop.mp4', loops: 10 },
-    { src: '/gate-video.mp4', loops: 10 },
+    { src: `${VIDEO_BASE}/djloop.mp4`, loops: 10 },
+    { src: `${VIDEO_BASE}/gate-video.mp4`, loops: 10 },
   ]
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoIndex, setVideoIndex] = useState(0)
