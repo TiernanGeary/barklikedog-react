@@ -25,10 +25,14 @@ interface Props {
 }
 
 export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages, skipVoteThreshold, skipVoteCount, skipVoteSong }: Props) {
-  const VIDEOS = ['/djloop.mp4', '/gate-video.mp4']
+  const VIDEOS = [
+    { src: '/djloop.mp4', loops: 10 },
+    { src: '/gate-video.mp4', loops: 10 },
+  ]
   const videoRef = useRef<HTMLVideoElement>(null)
   const [videoIndex, setVideoIndex] = useState(0)
   const [videoFade, setVideoFade] = useState(true)
+  const loopCount = useRef(0)
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
@@ -238,12 +242,20 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
           onContextMenu={(e) => e.preventDefault()}
           onCanPlay={() => setVideoFade(true)}
           onEnded={() => {
-            setVideoFade(false)
-            setTimeout(() => {
-              setVideoIndex((i) => (i + 1) % VIDEOS.length)
-            }, 500)
+            loopCount.current++
+            if (loopCount.current < VIDEOS[videoIndex].loops) {
+              // Replay same video
+              videoRef.current?.play()
+            } else {
+              // Fade out, switch to next video
+              loopCount.current = 0
+              setVideoFade(false)
+              setTimeout(() => {
+                setVideoIndex((i) => (i + 1) % VIDEOS.length)
+              }, 500)
+            }
           }}
-          src={VIDEOS[videoIndex]}
+          src={VIDEOS[videoIndex].src}
           style={{ pointerEvents: 'none', opacity: videoFade ? 1 : 0, transition: 'opacity 0.5s ease' }}
         />
       </div>
@@ -381,7 +393,7 @@ const styles = `
 .radio-video-wrap {
   max-width: 100%;
   margin-bottom: 12px;
-  max-height: 35vh;
+  height: 35vh;
   background: #ffffff;
   position: relative;
   overflow: hidden;
@@ -393,7 +405,6 @@ const styles = `
 .radio-video-wrap video {
   width: 100%;
   height: 100%;
-  max-height: 35vh;
   object-fit: contain;
   display: block;
   pointer-events: none;
@@ -645,7 +656,7 @@ const styles = `
   }
 
   .radio-video-wrap {
-    max-height: 30vh;
+    height: 30vh;
   }
 
   .radio-bottom {
