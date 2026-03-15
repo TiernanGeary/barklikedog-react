@@ -25,18 +25,19 @@ interface Props {
 }
 
 export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, chatMessages, skipVoteThreshold, skipVoteCount, skipVoteSong }: Props) {
+  const VIDEO_STREAM = 'http://87.99.129.139:8443/stream/stream.m3u8'
   const VIDEO_BASE = 'http://87.99.129.139:8443/videos'
-  // timezone: sync video position to time-of-day in that timezone (for 24hr videos)
-  // loops: how many times to play before cycling to next (for short clips)
-  const VIDEOS: { src: string; loops?: number; timezone?: string }[] = [
+  // Fallback clips shown while HLS stream loads or if unavailable
+  const FALLBACK_VIDEOS = [
     { src: `${VIDEO_BASE}/djloop.mp4`, loops: 10 },
     { src: `${VIDEO_BASE}/gate-video.mp4`, loops: 10 },
   ]
   const videoRef = useRef<HTMLVideoElement>(null)
+  const hlsRef = useRef<any>(null)
+  const [useStream, setUseStream] = useState(true)
   const [videoIndex, setVideoIndex] = useState(0)
   const [videoFade, setVideoFade] = useState(true)
   const loopCount = useRef(0)
-  const timeSynced = useRef(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [volume, setVolume] = useState(0.8)
@@ -47,6 +48,46 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
   const [skipVoting, setSkipVoting] = useState(false)
   const [hasVotedSkip, setHasVotedSkip] = useState(false)
   const [localSkipCount, setLocalSkipCount] = useState(skipVoteCount)
+
+  // HLS stream setup
+  useEffect(() => {
+    if (!useStream || !videoRef.current) return
+    const video = videoRef.current
+
+    // Native HLS support (Safari)
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = VIDEO_STREAM
+      video.play().catch(() => {})
+      return
+    }
+
+    // Use hls.js for other browsers
+    let hls: any = null
+    import('hls.js').then((Hls) => {
+      const HlsClass = Hls.default
+      if (!HlsClass.isSupported()) {
+        setUseStream(false)
+        return
+      }
+      hls = new HlsClass()
+      hlsRef.current = hls
+      hls.loadSource(VIDEO_STREAM)
+      hls.attachMedia(video)
+      hls.on(HlsClass.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {})
+      })
+      hls.on(HlsClass.Events.ERROR, (_: any, data: any) => {
+        if (data.fatal) {
+          console.log('[video] HLS fatal error, falling back to clips')
+          setUseStream(false)
+        }
+      })
+    }).catch(() => setUseStream(false))
+
+    return () => {
+      if (hls) { hls.destroy(); hlsRef.current = null }
+    }
+  }, [useStream])
 
   // Sync skip vote count from server props
   useEffect(() => {
@@ -236,73 +277,53 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
 
       {/* Video */}
       <div className="radio-video-wrap">
-        <video
-          ref={videoRef}
-          autoPlay
-          loop={!!VIDEOS[videoIndex].timezone}
-          muted
-          playsInline
-          disablePictureInPicture
-          controlsList="nodownload nofullscreen noremoteplayback"
-          onContextMenu={(e) => e.preventDefault()}
-          onCanPlay={() => {
-            const v = videoRef.current
-            const current = VIDEOS[videoIndex]
-            // Timezone-synced video: seek to current time-of-day
-            if (current.timezone && v && !timeSynced.current) {
-              const now = new Date()
-              const tz = new Intl.DateTimeFormat('en-US', {
-                timeZone: current.timezone,
-                hour: 'numeric', minute: 'numeric', second: 'numeric',
-                hour12: false,
-              }).formatToParts(now)
-              const h = parseInt(tz.find((p) => p.type === 'hour')?.value || '0')
-              const m = parseInt(tz.find((p) => p.type === 'minute')?.value || '0')
-              const s = parseInt(tz.find((p) => p.type === 'second')?.value || '0')
-              const secondsSinceMidnight = h * 3600 + m * 60 + s
-              if (v.duration && secondsSinceMidnight < v.duration) {
-                v.currentTime = secondsSinceMidnight
+        {useStream ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            disablePictureInPicture
+            controlsList="nodownload nofullscreen noremoteplayback"
+            onContextMenu={(e) => e.preventDefault()}
+            style={{ pointerEvents: 'none', opacity: 1, transition: 'opacity 0.5s ease' }}
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            disablePictureInPicture
+            controlsList="nodownload nofullscreen noremoteplayback"
+            onContextMenu={(e) => e.preventDefault()}
+            onCanPlay={() => setVideoFade(true)}
+            onTimeUpdate={() => {
+              const v = videoRef.current
+              const current = FALLBACK_VIDEOS[videoIndex]
+              if (!v || !v.duration) return
+              const remaining = v.duration - v.currentTime
+              if (remaining <= 0.6 && loopCount.current >= (current.loops || 1) - 1 && videoFade) {
+                setVideoFade(false)
               }
-              timeSynced.current = true
-            }
-            setVideoFade(true)
-          }}
-          onTimeUpdate={() => {
-            const v = videoRef.current
-            const current = VIDEOS[videoIndex]
-            if (!v || !v.duration) return
-            // Timezone videos loop naturally (24hr), no cycling
-            if (current.timezone) return
-            const remaining = v.duration - v.currentTime
-            // When near end of final loop, fade out early
-            if (remaining <= 0.6 && loopCount.current >= (current.loops || 1) - 1 && videoFade) {
-              setVideoFade(false)
-            }
-          }}
-          onEnded={() => {
-            const current = VIDEOS[videoIndex]
-            // Timezone video: just loop from start
-            if (current.timezone) {
-              const v = videoRef.current
-              if (v) { v.currentTime = 0; v.play() }
-              return
-            }
-            loopCount.current++
-            if (loopCount.current < (current.loops || 1)) {
-              const v = videoRef.current
-              if (v) { v.currentTime = 0; v.play() }
-            } else {
-              loopCount.current = 0
-              timeSynced.current = false
-              // Video already faded out via onTimeUpdate — switch after fade completes
-              setTimeout(() => {
-                setVideoIndex((i) => (i + 1) % VIDEOS.length)
-              }, 100)
-            }
-          }}
-          src={VIDEOS[videoIndex].src}
-          style={{ pointerEvents: 'none', opacity: videoFade ? 1 : 0, transition: 'opacity 0.5s ease' }}
-        />
+            }}
+            onEnded={() => {
+              const current = FALLBACK_VIDEOS[videoIndex]
+              loopCount.current++
+              if (loopCount.current < (current.loops || 1)) {
+                const v = videoRef.current
+                if (v) { v.currentTime = 0; v.play() }
+              } else {
+                loopCount.current = 0
+                setTimeout(() => {
+                  setVideoIndex((i) => (i + 1) % FALLBACK_VIDEOS.length)
+                }, 100)
+              }
+            }}
+            src={FALLBACK_VIDEOS[videoIndex].src}
+            style={{ pointerEvents: 'none', opacity: videoFade ? 1 : 0, transition: 'opacity 0.5s ease' }}
+          />
+        )}
       </div>
 
       {/* Audio stream */}
