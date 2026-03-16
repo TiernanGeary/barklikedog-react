@@ -114,6 +114,15 @@ body {
   background-color: transparent;
   font-size: 12px;
   line-height: 1.8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .page-content {
@@ -1298,4 +1307,77 @@ label {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* ==========================================================================
+   DARK MODE
+   ========================================================================== */
+
+html.dark body {
+  background-color: #111;
+  color: #ccc;
+}
+
+html.dark #sidebar {
+  background-color: #111;
+  border-right-color: #333;
+}
+
+html.dark #sidebar a {
+  color: #ccc;
+}
+
+html.dark #footer {
+  border-top-color: #333;
+  color: #888;
+}
+
+html.dark #footer a {
+  color: #888;
+}
+
+html.dark .media-image-wrapper {
+  border-color: #333;
+}
+
+html.dark .post-item:not(.post-item--featured) {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .post-tag {
+  border-color: #444;
+  color: #aaa;
+}
+
+html.dark .single-post-categories {
+  color: #ccc;
+}
+
+html.dark .shop-filter-bar {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .home-video-wrap {
+  background: #111;
+}
+
+html.dark .entry-content,
+html.dark .front-page-content {
+  color: #ccc;
+}
+
+html.dark .single-post-content blockquote {
+  border-left-color: #ccc;
+}
+
+html.dark .single-post-tags {
+  border-top-color: #333;
+}
+
+html.dark .comments-area {
+  border-top-color: #ccc;
+}
+
+html.dark .children {
+  border-left-color: rgba(255, 255, 255, 0.15);
 }
