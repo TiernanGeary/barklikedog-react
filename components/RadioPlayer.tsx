@@ -225,7 +225,7 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
 
       {/* Video */}
       <div className="radio-video-wrap">
-        <VideoStream style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+        <VideoStream />
       </div>
 
       {/* Audio stream */}
@@ -357,12 +357,8 @@ const styles = `
 }
 
 .radio-video-wrap {
-  max-width: 100%;
-  margin-bottom: 12px;
-  height: 35vh;
-  background: #ffffff;
-  position: relative;
-  overflow: hidden;
+  max-width: 480px;
+  margin: 0 auto 12px;
   pointer-events: none;
   -webkit-user-select: none;
   user-select: none;
@@ -370,10 +366,7 @@ const styles = `
 
 .radio-video-wrap video {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
   display: block;
-  pointer-events: none;
 }
 
 .radio-controls-area {
@@ -622,7 +615,7 @@ const styles = `
   }
 
   .radio-video-wrap {
-    height: 30vh;
+    max-width: 100%;
   }
 
   .radio-bottom {
