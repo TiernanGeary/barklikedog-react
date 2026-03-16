@@ -2,8 +2,8 @@
 
 import { useRef, useState, useEffect } from 'react'
 
-const VIDEO_STREAM = 'http://87.99.129.139:8443/stream/stream.m3u8'
-const VIDEO_BASE = 'http://87.99.129.139:8443/videos'
+const VIDEO_STREAM = 'https://stream.barklike.dog:8443/stream/stream.m3u8'
+const VIDEO_BASE = 'https://stream.barklike.dog:8443/videos'
 const FALLBACK_VIDEOS = [
   { src: `${VIDEO_BASE}/djloop.mp4`, loops: 10 },
   { src: `${VIDEO_BASE}/gate-video.mp4`, loops: 10 },
