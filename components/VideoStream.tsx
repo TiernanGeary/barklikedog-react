@@ -71,13 +71,35 @@ export default function VideoStream({ className, style }: Props) {
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   }
 
+  const liveDot = (
+    <span style={{
+      position: 'absolute', top: 8, left: 8,
+      display: 'flex', alignItems: 'center', gap: 4,
+      fontSize: '0.55rem', letterSpacing: '0.08em',
+      color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase',
+      pointerEvents: 'none', zIndex: 1,
+    }}>
+      <span style={{
+        width: 6, height: 6, borderRadius: '50%',
+        background: '#e33',
+        boxShadow: '0 0 4px 1px rgba(227,51,51,0.7)',
+        animation: 'livePulse 2s ease-in-out infinite',
+      }} />
+      LIVE
+      <style>{`@keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+    </span>
+  )
+
   if (useStream) {
     return (
-      <video
-        {...videoProps}
-        className={className}
-        style={{ pointerEvents: 'none', ...style }}
-      />
+      <span style={{ position: 'relative', display: 'inline-block', lineHeight: 0 }}>
+        {liveDot}
+        <video
+          {...videoProps}
+          className={className}
+          style={{ pointerEvents: 'none', ...style }}
+        />
+      </span>
     )
   }
 
