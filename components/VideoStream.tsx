@@ -92,14 +92,14 @@ export default function VideoStream({ className, style }: Props) {
 
   if (useStream) {
     return (
-      <span style={{ position: 'relative', display: 'inline-block', lineHeight: 0 }}>
+      <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0, maxWidth: '100%' }}>
         {liveDot}
         <video
           {...videoProps}
           className={className}
-          style={{ pointerEvents: 'none', ...style }}
+          style={{ pointerEvents: 'none', display: 'block', maxWidth: '100%', ...style }}
         />
-      </span>
+      </div>
     )
   }
 
