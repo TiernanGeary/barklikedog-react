@@ -8,7 +8,7 @@ export default async function HomePage() {
   return (
     <div className="page-content">
       <div className="home-video-wrap">
-        <VideoStream style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+        <VideoStream />
       </div>
       <div className="front-page-content">
         {page?.body ? (
