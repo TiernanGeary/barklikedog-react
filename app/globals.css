@@ -189,10 +189,7 @@ body {
    ========================================================================== */
 
 .home-video-wrap {
-  max-height: 30vh;
-  background: #ffffff;
   display: flex;
-  align-items: center;
   justify-content: center;
   pointer-events: none;
   -webkit-user-select: none;
@@ -201,8 +198,8 @@ body {
 }
 
 .home-video-wrap video {
-  max-width: 100%;
-  max-height: 30vh;
+  width: 480px;
+  max-width: 90%;
   object-fit: contain;
 }
 
