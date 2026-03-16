@@ -234,8 +234,6 @@ export default function RadioPlayer({ tracks, uploadsEnabled, azuracastBaseUrl, 
       {/* Controls below video */}
       <div className="radio-controls-area">
         <div className="radio-now-playing">
-          <span className="radio-live-dot" />
-          <span className="radio-live-label">LIVE</span>
           {nowPlaying && (
             <span className="radio-now-title">Currently Playing: {nowPlaying}</span>
           )}
