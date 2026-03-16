@@ -1318,6 +1318,10 @@ html.dark body {
   color: #ccc;
 }
 
+html.dark a {
+  color: #ccc;
+}
+
 html.dark #sidebar {
   background-color: #111;
   border-right-color: #333;
@@ -1336,20 +1340,35 @@ html.dark #footer a {
   color: #888;
 }
 
-html.dark .media-image-wrapper {
-  border-color: #333;
+/* Headings */
+html.dark h1, html.dark h2, html.dark h3,
+html.dark h4, html.dark h5, html.dark h6 {
+  color: #ddd;
 }
 
-html.dark .post-item:not(.post-item--featured) {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-html.dark .post-tag {
+/* Buttons & inputs */
+html.dark .button,
+html.dark .btn,
+html.dark button,
+html.dark input[type="button"],
+html.dark input[type="submit"] {
+  background-color: #222;
+  color: #ccc;
   border-color: #444;
-  color: #aaa;
 }
 
-html.dark .single-post-categories {
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #1a1a1a;
+  color: #ccc;
+  border-color: #444;
+}
+
+/* Products / Shop */
+html.dark .product-title,
+html.dark .price,
+html.dark .product-info {
   color: #ccc;
 }
 
@@ -1357,6 +1376,100 @@ html.dark .shop-filter-bar {
   border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
+html.dark .shop-filter-btn {
+  color: #ccc;
+}
+
+/* Media archive */
+html.dark .media-image-wrapper {
+  border-color: #333;
+}
+
+html.dark .media-item a,
+html.dark .media-item-title {
+  color: #ccc;
+}
+
+html.dark .media-placeholder {
+  background-color: #222;
+}
+
+/* Single media */
+html.dark .single-media-title,
+html.dark .single-media-type {
+  color: #ccc;
+}
+
+html.dark .single-media-description {
+  color: #aaa;
+}
+
+/* Blog posts */
+html.dark .post-item:not(.post-item--featured) {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .post-item--featured {
+  border-bottom-color: #ccc;
+}
+
+html.dark .post-item a,
+html.dark .post-item-title {
+  color: #ccc;
+}
+
+html.dark .post-tag {
+  border-color: #444;
+  color: #aaa;
+}
+
+/* Single post */
+html.dark .single-post-title {
+  color: #ddd;
+}
+
+html.dark .single-post-meta {
+  color: #777;
+}
+
+html.dark .single-post-categories {
+  color: #ccc;
+}
+
+html.dark .single-post-content {
+  color: #bbb;
+}
+
+html.dark .single-post-content blockquote {
+  border-left-color: #666;
+}
+
+html.dark .single-post-tags {
+  border-top-color: #333;
+}
+
+/* Comments */
+html.dark .comments-area {
+  border-top-color: #444;
+}
+
+html.dark .comment-list .comment {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .comment-author-name {
+  color: #ddd;
+}
+
+html.dark .comment-content p {
+  color: #bbb;
+}
+
+html.dark .children {
+  border-left-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Home video & content */
 html.dark .home-video-wrap {
   background: #111;
 }
@@ -1366,18 +1479,11 @@ html.dark .front-page-content {
   color: #ccc;
 }
 
-html.dark .single-post-content blockquote {
-  border-left-color: #ccc;
+/* Nav */
+html.dark .nav-group a {
+  color: #ccc;
 }
 
-html.dark .single-post-tags {
-  border-top-color: #333;
-}
-
-html.dark .comments-area {
-  border-top-color: #ccc;
-}
-
-html.dark .children {
-  border-left-color: rgba(255, 255, 255, 0.15);
+html.dark .nav-group-title {
+  color: #888;
 }

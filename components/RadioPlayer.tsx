@@ -874,4 +874,75 @@ const styles = `
   color: #cd2f2f;
   margin-top: 8px;
 }
+
+/* Dark mode */
+html.dark .radio-controls-area {
+  color: #ccc;
+}
+
+html.dark .radio-skip-btn {
+  color: #aaa;
+  border-color: #444;
+}
+
+html.dark .radio-skip-btn:hover:not(:disabled) {
+  color: #ff3700;
+  border-color: #ff3700;
+}
+
+html.dark .radio-tracklist {
+  border-color: #333;
+}
+
+html.dark .radio-chat {
+  border-color: #333;
+}
+
+html.dark .radio-chat-msg:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+html.dark .radio-chat-header-input {
+  color: #ccc;
+  border-bottom-color: #444;
+}
+
+html.dark .radio-chat-header-input:focus {
+  border-bottom-color: #888;
+}
+
+html.dark .radio-chat-input {
+  color: #ccc;
+  border-bottom-color: #444;
+}
+
+html.dark .radio-chat-input:focus {
+  border-bottom-color: #888;
+}
+
+html.dark .radio-chat-reply-bar {
+  border-top-color: #333;
+}
+
+html.dark .radio-vol-slider {
+  background: #444;
+}
+
+html.dark .radio-vol-slider::-webkit-slider-thumb {
+  background: #ccc;
+}
+
+html.dark .radio-vol-slider::-moz-range-thumb {
+  background: #ccc;
+}
+
+html.dark .radio-upload-title {
+  color: #ccc;
+  border-color: #444;
+  background: #1a1a1a;
+}
+
+html.dark .radio-upload-title:focus {
+  border-color: #888;
+}
 `
