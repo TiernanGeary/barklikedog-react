@@ -905,6 +905,7 @@ html.dark .radio-chat-msg:hover {
 html.dark .radio-chat-header-input {
   color: #ccc;
   border-bottom-color: #444;
+  background: transparent;
 }
 
 html.dark .radio-chat-header-input:focus {
@@ -914,10 +915,15 @@ html.dark .radio-chat-header-input:focus {
 html.dark .radio-chat-input {
   color: #ccc;
   border-bottom-color: #444;
+  background: #111;
 }
 
 html.dark .radio-chat-input:focus {
   border-bottom-color: #888;
+}
+
+html.dark .radio-chat-form {
+  background: #111;
 }
 
 html.dark .radio-chat-reply-bar {
