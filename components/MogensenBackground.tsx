@@ -400,7 +400,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
     document.documentElement.style.setProperty('--bg-color', bg)
 
     // Grain: regenerate noise each frame for a living, animated grain effect
-    const grainSize = 256
+    const grainSize = 512
     const grainCanvas = document.createElement('canvas')
     grainCanvas.width = grainSize
     grainCanvas.height = grainSize
@@ -413,7 +413,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         grainData.data[i] = v
         grainData.data[i + 1] = v
         grainData.data[i + 2] = v
-        grainData.data[i + 3] = 30
+        grainData.data[i + 3] = 14
       }
       grainCtx.putImageData(grainData, 0, 0)
       const pattern = ctx!.createPattern(grainCanvas, 'repeat')

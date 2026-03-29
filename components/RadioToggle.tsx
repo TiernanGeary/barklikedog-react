@@ -27,6 +27,23 @@ export default function RadioToggle() {
     if (audioRef.current) audioRef.current.volume = volume
   }, [volume])
 
+  // Stop playback when navigating away from home
+  useEffect(() => {
+    function stop() {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+        audioRef.current = null
+      }
+      setPlaying(false)
+    }
+    window.addEventListener('radio-stop', stop)
+    return () => {
+      stop()
+      window.removeEventListener('radio-stop', stop)
+    }
+  }, [])
+
   function toggle() {
     if (!audioRef.current) {
       audioRef.current = new Audio(STREAM_URL)

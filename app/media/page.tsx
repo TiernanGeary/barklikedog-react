@@ -1,12 +1,5 @@
-import { getMediaItems } from '@/lib/sanity'
-import MediaGrid from '@/components/MediaGrid'
+import { redirect } from 'next/navigation'
 
-export default async function MediaPage() {
-  const items = await getMediaItems().catch(() => [])
-
-  return (
-    <div className="page-content">
-      <MediaGrid items={items} />
-    </div>
-  )
+export default function MediaPage() {
+  redirect('/')
 }

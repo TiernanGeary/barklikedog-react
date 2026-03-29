@@ -33,8 +33,6 @@ const NAV_ITEMS = [
   { title: 'Home', href: '/' },
   { title: 'Shop', href: '/shop' },
   { title: 'Posts', href: '/posts' },
-  { title: 'Media', href: '/media' },
-  { title: 'Radio', href: '/radio' },
   { title: 'About', href: '/about' },
 ]
 
