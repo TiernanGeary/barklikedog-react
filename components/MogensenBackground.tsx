@@ -18,10 +18,10 @@ const DEFAULT_BGS = [
 ]
 const PAD = 0.05 // 5% padding on each side
 
-type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split'
-const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split']
+type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split' | 'quote'
+const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split', 'quote']
 
-interface Rect { x: number; y: number; w: number; h: number; circle?: boolean; color?: string; delay?: number }
+interface Rect { x: number; y: number; w: number; h: number; circle?: boolean; color?: string; delay?: number; text?: string; fontSize?: number }
 
 function pick<T>(a: T[]): T { return a[Math.floor(Math.random() * a.length)] }
 
@@ -553,6 +553,31 @@ function buildSplit(vw: number, vh: number, palette: string[]): Rect[] {
   }
 }
 
+// ── MODE N: Quote ───────────────────────────────────────────────────────────
+const QUOTE_LINES = [
+  'the trees like lungs',
+  'filling with air',
+  'my sister, the mean one,',
+  'pulling my hair',
+]
+
+function buildQuote(vw: number, vh: number): Rect[] {
+  const fontSize = Math.min(vw * 0.065, vh * 0.09, 72)
+  const lineHeight = fontSize * 1.2
+  const totalHeight = QUOTE_LINES.length * lineHeight
+  const startY = (vh - totalHeight) / 2 + fontSize
+
+  return QUOTE_LINES.map((line, i) => ({
+    x: vw * 0.38,
+    y: startY + i * lineHeight,
+    w: 0,
+    h: 0,
+    text: line,
+    fontSize,
+    delay: 3000 + i * 2000,
+  }))
+}
+
 // ── Builder dispatch ────────────────────────────────────────────────────────
 function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[], bg?: string): Rect[] {
   switch (mode) {
@@ -569,6 +594,7 @@ function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[], bg?
     case 'colorwall': return buildColorwall(vw, vh, palette || DEFAULT_PALETTE)
     case 'hbands': return buildHbands(vw, vh, palette || DEFAULT_PALETTE)
     case 'split': return buildSplit(vw, vh, palette || DEFAULT_PALETTE)
+    case 'quote': return buildQuote(vw, vh)
   }
 }
 
@@ -642,7 +668,10 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
 
     function drawPanel(p: Rect) {
       ctx!.fillStyle = p.color || color
-      if (p.circle) {
+      if (p.text) {
+        ctx!.font = `bold ${p.fontSize || 32}px "Helvetica Neue", Helvetica, Arial, sans-serif`
+        ctx!.fillText(p.text, p.x, p.y)
+      } else if (p.circle) {
         const r = p.w / 2
         ctx!.beginPath()
         ctx!.arc(p.x + r, p.y + r, r, 0, Math.PI * 2)
