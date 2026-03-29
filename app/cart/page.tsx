@@ -5,9 +5,15 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/components/CartProvider'
 
+const SHIPPING_COST = { us: 8, intl: 20 }
+
 export default function CartPage() {
   const { items, removeItem, updateQuantity, total, clearCart } = useCart()
   const [loading, setLoading] = useState(false)
+  const [region, setRegion] = useState<'us' | 'intl'>('us')
+
+  const shipping = SHIPPING_COST[region]
+  const orderTotal = total + shipping
 
   async function handleCheckout() {
     if (!items.length) return
@@ -18,6 +24,7 @@ export default function CartPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: items.map(i => ({ priceId: i.priceId, quantity: i.quantity })),
+          region,
         }),
       })
       const data = await res.json()
@@ -72,8 +79,28 @@ export default function CartPage() {
           </div>
 
           <div className="cart-footer">
-            <div className="cart-total">
-              Total: <strong>${total.toFixed(2)}</strong>
+            <div className="cart-summary">
+              <div className="cart-shipping-select">
+                <label>Ship to:</label>
+                <select value={region} onChange={e => setRegion(e.target.value as 'us' | 'intl')}>
+                  <option value="us">United States — $8.00</option>
+                  <option value="intl">International — $20.00</option>
+                </select>
+              </div>
+              <div className="cart-summary-lines">
+                <div className="cart-summary-line">
+                  <span>Subtotal</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+                <div className="cart-summary-line">
+                  <span>Shipping</span>
+                  <span>${shipping.toFixed(2)}</span>
+                </div>
+                <div className="cart-summary-line cart-summary-total">
+                  <span>Total</span>
+                  <span>${orderTotal.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
             <div className="cart-actions">
               <button onClick={clearCart} className="cart-clear">Clear Cart</button>

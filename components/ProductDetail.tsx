@@ -16,7 +16,8 @@ export default function ProductDetail({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState<string>('')
   const [added, setAdded] = useState(false)
-  const { addItem } = useCart()
+  const [showToast, setShowToast] = useState(false)
+  const { addItem, count } = useCart()
   const router = useRouter()
 
   const matchedVariant = useMemo(() => {
@@ -41,7 +42,8 @@ export default function ProductDetail({ product }: Props) {
       variant: matchedVariant?.option,
     })
     setAdded(true)
-    setTimeout(() => setAdded(false), 1500)
+    setShowToast(true)
+    setTimeout(() => setAdded(false), 1200)
   }, [priceId, addItem, product.name, matchedVariant, displayPrice, images])
 
   const variantNames = useMemo(() => {
@@ -131,13 +133,25 @@ export default function ProductDetail({ product }: Props) {
           )}
 
           {priceId && (
-            <button
-              className="buy-button"
-              onClick={handleAddToCart}
-              disabled={product.productType === 'variable' && !selectedVariant}
-            >
-              {added ? 'Added ✓' : 'Add to Cart'}
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                className="buy-button"
+                onClick={handleAddToCart}
+                disabled={product.productType === 'variable' && !selectedVariant}
+              >
+                {added ? 'Added ✓' : 'Add to Cart'}
+              </button>
+              {showToast && (
+                <div className="cart-toast">
+                  <span className="cart-toast-text">
+                    {product.name}{matchedVariant ? ` — ${matchedVariant.option}` : ''} added
+                  </span>
+                  <button className="cart-toast-link" onClick={() => router.push('/cart')}>
+                    View Cart ({count})  →
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           {product.shortDescription && (
