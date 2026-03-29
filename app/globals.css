@@ -319,6 +319,7 @@ body.bg-fading #footer {
 .single-product .product-title {
   font-size: 15px;
   font-weight: normal;
+  color: #000000;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 10px;
@@ -408,6 +409,7 @@ body.bg-fading #footer {
 .product-description {
   font-size: 12px;
   line-height: 1.2;
+  color: #000000;
   margin-bottom: 30px;
   max-width: 100%;
 }

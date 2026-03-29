@@ -14,7 +14,7 @@ const DEFAULT_BGS = [
   // pastels
   '#A8C8F5', '#B2E4C3', '#FAF0A8', '#F7A8D8', '#F5A8A8',
   // brand
-  '#518EE4', '#83D29E', '#F6DE69', '#EF43AD', '#ED4D4D',
+  '#518EE4', '#83D29E', '#F6DE69', '#EF43AD', '#ED4D4D', '#835819',
 ]
 const PAD = 0.05 // 5% padding on each side
 
@@ -562,13 +562,19 @@ const QUOTE_LINES = [
 ]
 
 function buildQuote(vw: number, vh: number): Rect[] {
-  const fontSize = Math.min(vw * 0.065, vh * 0.09, 72)
+  const longest = QUOTE_LINES.reduce((a, b) => a.length > b.length ? a : b)
+  const maxTextWidth = vw * 0.55
+  const fontFromWidth = maxTextWidth / (longest.length * 0.55)
+  const fontFromHeight = vh / (QUOTE_LINES.length * 1.5 + 2)
+  const fontSize = Math.min(fontFromWidth, fontFromHeight, 72)
+
   const lineHeight = fontSize * 1.2
   const totalHeight = QUOTE_LINES.length * lineHeight
   const startY = (vh - totalHeight) / 2 + fontSize
+  const x = vw < 600 ? vw * 0.08 : vw * 0.38
 
   return QUOTE_LINES.map((line, i) => ({
-    x: vw * 0.38,
+    x,
     y: startY + i * lineHeight,
     w: 0,
     h: 0,
