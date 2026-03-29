@@ -719,16 +719,33 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
           drawPanel(panels[i])
         }
         ctx!.globalAlpha = 1
-        applyGrain(w, h)
 
-        // Keep looping for animated grain even after panels are done
-        rafRef.current = requestAnimationFrame(frame)
+        if (!done) {
+          rafRef.current = requestAnimationFrame(frame)
+        } else {
+          // Animation done — switch to 24fps grain-only loop
+          let lastGrain = 0
+          const GRAIN_INTERVAL = 1000 / 24
+          function grainLoop(now: number) {
+            if (stopped) return
+            if (now - lastGrain >= GRAIN_INTERVAL) {
+              drawAll(panels, w, h)
+              lastGrain = now
+            }
+            rafRef.current = requestAnimationFrame(grainLoop)
+          }
+          rafRef.current = requestAnimationFrame(grainLoop)
+        }
       }
       rafRef.current = requestAnimationFrame(frame)
     }
 
     // Initial draw + animate
     const { w, h } = setup()
+    // Fill bg immediately so there's no blank frame on regeneration
+    ctx.fillStyle = bg
+    ctx.fillRect(0, 0, w, h)
+
     const panels = buildPanels(mode, w, h, palette, bg)
     animate(panels, w, h)
 
@@ -741,10 +758,15 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         cancelAnimationFrame(rafRef.current)
         const { w: nw, h: nh } = setup()
         const np = buildPanels(mode, nw, nh, palette, bg)
-        // Restart a grain-only loop with the new panels
-        function grainLoop() {
+        drawAll(np, nw, nh)
+        let lastGrain = 0
+        const GRAIN_INTERVAL = 1000 / 24
+        function grainLoop(now: number) {
           if (stopped) return
-          drawAll(np, nw, nh)
+          if (now - lastGrain >= GRAIN_INTERVAL) {
+            drawAll(np, nw, nh)
+            lastGrain = now
+          }
           rafRef.current = requestAnimationFrame(grainLoop)
         }
         rafRef.current = requestAnimationFrame(grainLoop)

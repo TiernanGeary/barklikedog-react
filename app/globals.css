@@ -283,18 +283,22 @@ body.bg-fading #footer {
 
 .single-product .product {
   display: grid;
-  grid-template-columns: 2fr 3fr;
+  grid-template-columns: 3fr 2fr;
   gap: 60px;
   margin: 0;
   padding: 0;
+  align-items: start;
 }
 
 .single-product .product-images {
   order: 1;
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .single-product .product-images img {
+  max-width: 520px;
   width: 100%;
   height: auto;
   display: block;
@@ -313,7 +317,7 @@ body.bg-fading #footer {
 
 .single-product .product-summary {
   order: 2;
-  padding: 0;
+  padding-top: 20px;
 }
 
 .single-product .product-title {
@@ -408,8 +412,9 @@ body.bg-fading #footer {
 
 .product-description {
   font-size: 12px;
-  line-height: 1.2;
+  line-height: 1.6;
   color: #000000;
+  margin-top: 12px;
   margin-bottom: 30px;
   max-width: 100%;
 }
