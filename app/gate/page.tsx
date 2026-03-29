@@ -20,8 +20,9 @@ export default function GatePage() {
 }
 
 const styles = `
-/* Hide the root layout sidebar and footer */
-#sidebar,
+/* Hide the root layout header, nav, and footer */
+#site-header,
+#site-nav,
 #footer {
   display: none !important;
 }

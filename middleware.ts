@@ -7,9 +7,8 @@ const SANITY_QUERY_URL = `https://${PROJECT_ID}.api.sanity.io/v2026-03-10/data/q
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Never gate the gate page, studio, static assets, or API routes
+  // Never gate static assets, studio, or API routes
   if (
-    pathname === '/gate' ||
     pathname.startsWith('/studio') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -23,6 +22,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
+  // Home page is always accessible
+  if (pathname === '/') {
+    return NextResponse.next()
+  }
+
   // Check Sanity for coming soon status
   try {
     const query = encodeURIComponent('*[_type == "siteSettings" && _id == "siteSettings"][0].comingSoon')
@@ -32,9 +36,10 @@ export async function middleware(req: NextRequest) {
     if (res.ok) {
       const data = await res.json()
       if (data.result === true) {
-        const gateUrl = req.nextUrl.clone()
-        gateUrl.pathname = '/gate'
-        return NextResponse.rewrite(gateUrl)
+        // Redirect non-home pages to home in coming soon mode
+        const homeUrl = req.nextUrl.clone()
+        homeUrl.pathname = '/'
+        return NextResponse.redirect(homeUrl)
       }
     }
   } catch {

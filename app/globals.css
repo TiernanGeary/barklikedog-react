@@ -33,7 +33,7 @@ body {
   font-size: 12px;
   line-height: 1.6;
   color: #333333;
-  background-color: #ffffff;
+  background-color: transparent;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -75,7 +75,7 @@ strong, b { font-weight: bold; }
 em, i     { font-style: italic; }
 
 /* ==========================================================================
-   LAYOUT: SIDEBAR + MAIN CONTENT
+   LAYOUT: HEADER + NAV + MAIN + FOOTER
    ========================================================================== */
 
 body {
@@ -84,22 +84,63 @@ body {
   flex-direction: column;
 }
 
-#sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 180px;
-  height: 100vh;
-  background-color: transparent;
-  overflow-y: auto;
-  z-index: 1000;
-  padding: 50px 20px 30px;
+#site-header {
+  margin: 25px 25px 0;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.header-border {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.header-logo {
+  display: block;
+  line-height: 0;
+}
+
+.header-logo img {
+  height: 35px;
+  width: auto;
+}
+
+#site-nav {
+  margin: 0 25px;
+  padding: 14px 0;
+}
+
+#site-nav ul {
+  list-style: none;
+  display: flex;
+  gap: 24px;
+  padding: 0;
+  margin: 0;
+}
+
+#site-nav a {
+  font-size: 13px;
+  color: #333333;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+#site-nav a:hover {
+  opacity: 0.6;
+}
+
+#site-nav a.current {
+  font-weight: bold;
 }
 
 #main-content {
-  margin-left: 180px;
   flex: 1;
-  width: calc(100% - 180px);
+  width: 100%;
   background-color: transparent;
 }
 
@@ -108,15 +149,17 @@ body {
 }
 
 #footer {
-  margin-left: 180px;
-  padding: 40px 20px;
-  border-top: 1px solid #606060;
+  padding: 40px 25px;
   background-color: transparent;
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 11px;
+  color: #6F6F6F;
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+#footer a {
+  color: #6F6F6F;
 }
 
 .footer-actions {
@@ -133,91 +176,7 @@ body {
   max-width: 100%;
 }
 
-/* ==========================================================================
-   LOGO
-   ========================================================================== */
-
-.logo-container {
-  margin-bottom: 50px;
-}
-
-.logo-container a {
-  display: block;
-  text-decoration: none;
-}
-
-.logo-container img.site-logo,
-.logo-container span {
-  width: 50px;
-  height: auto;
-  display: block;
-}
-
-/* ==========================================================================
-   NAVIGATION
-   ========================================================================== */
-
-.nav-group {
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-}
-
-.nav-group:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.nav-group ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.nav-group li {
-  margin-bottom: 12px;
-}
-
-.nav-group a {
-  display: block;
-  font-size: 13px;
-  color: #333333;
-  text-decoration: none;
-  transition: opacity 0.2s ease;
-}
-
-.nav-group a:hover {
-  opacity: 0.6;
-}
-
-.nav-group a.current {
-  font-weight: bold;
-}
-
-/* ==========================================================================
-   HOMEPAGE / FRONT PAGE
-   ========================================================================== */
-
-.home-video-wrap {
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-  -webkit-user-select: none;
-  user-select: none;
-  margin-bottom: 20px;
-}
-
-.home-video-wrap video {
-  width: 480px;
-  max-width: 90%;
-  object-fit: contain;
-}
-
-.front-page-content {
-  min-height: 60vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* (Logo and nav styles are now in the header/nav section above) */
 
 /* ==========================================================================
    PRODUCT GRID / ARCHIVE
@@ -514,24 +473,10 @@ label {
 }
 
 /* ==========================================================================
-   RESPONSIVE — SIDEBAR
+   RESPONSIVE — HEADER LAYOUT
    ========================================================================== */
 
 @media (max-width: 1024px) {
-  #sidebar {
-    width: 150px;
-    padding: 20px 15px;
-  }
-
-  #main-content {
-    margin-left: 150px;
-    width: calc(100% - 150px);
-  }
-
-  #footer {
-    margin-left: 150px;
-  }
-
   .products {
     grid-template-columns: repeat(5, 1fr);
     gap: 20px;
@@ -547,26 +492,23 @@ label {
 }
 
 @media (max-width: 768px) {
-  body {
-    flex-direction: column;
+  #site-header {
+    margin: 15px 15px 0;
+    padding: 14px 20px;
   }
 
-  #sidebar {
-    position: static;
-    width: 100%;
-    height: auto;
-    border-bottom: 1px solid #f0f0f0;
-    padding: 20px;
-    overflow-y: visible;
+  #site-nav {
+    margin: 0 15px;
+    padding: 10px 0;
   }
 
-  #main-content {
-    margin-left: 0;
-    width: 100%;
+  #site-nav ul {
+    gap: 16px;
+    flex-wrap: wrap;
   }
 
   #footer {
-    margin-left: 0;
+    padding: 30px 15px;
   }
 
   .products {
@@ -582,20 +524,38 @@ label {
     grid-template-columns: 1fr;
     gap: 30px;
   }
-
-  .logo-container {
-    margin-bottom: 20px;
-  }
-
-  .nav-group {
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-  }
 }
 
 @media (max-width: 480px) {
   body {
     font-size: 11px;
+  }
+
+  #site-header {
+    margin: 10px 10px 0;
+    padding: 12px 15px;
+    border-width: 3px;
+  }
+
+  .header-logo img {
+    height: 26px;
+  }
+
+  #site-nav {
+    margin: 0 10px;
+    padding: 8px 0;
+  }
+
+  #site-nav ul {
+    gap: 12px;
+  }
+
+  #site-nav a {
+    font-size: 12px;
+  }
+
+  #footer {
+    padding: 25px 10px;
   }
 
   .products {
@@ -616,14 +576,6 @@ label {
   input[type="button"],
   input[type="submit"] {
     padding: 8px 15px;
-    font-size: 12px;
-  }
-
-  #sidebar {
-    padding: 15px 10px;
-  }
-
-  .nav-group a {
     font-size: 12px;
   }
 }
@@ -1322,22 +1274,20 @@ html.dark a {
   color: #ccc;
 }
 
-html.dark #sidebar {
-  background-color: #111;
-  border-right-color: #333;
-}
+/* Rainbow dashed border works the same in dark mode via the pseudo-element */
 
-html.dark #sidebar a {
+/* Logo color is randomized inline — no dark mode filter needed */
+
+html.dark #site-nav a {
   color: #ccc;
 }
 
 html.dark #footer {
-  border-top-color: #333;
-  color: #888;
+  color: #555;
 }
 
 html.dark #footer a {
-  color: #888;
+  color: #555;
 }
 
 /* Headings */
@@ -1469,21 +1419,8 @@ html.dark .children {
   border-left-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Home video & content */
-html.dark .home-video-wrap {
-  background: #111;
-}
-
-html.dark .entry-content,
-html.dark .front-page-content {
+html.dark .entry-content {
   color: #ccc;
 }
 
-/* Nav */
-html.dark .nav-group a {
-  color: #ccc;
-}
-
-html.dark .nav-group-title {
-  color: #888;
-}
+/* (Nav dark mode is handled in #site-nav rules above) */

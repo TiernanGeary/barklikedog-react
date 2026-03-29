@@ -1,12 +1,10 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 
-const VIDEO_STREAM = 'https://stream.barklike.dog:8443/stream/stream.m3u8'
-const VIDEO_BASE = 'https://stream.barklike.dog:8443/videos'
-const FALLBACK_VIDEOS = [
-  { src: `${VIDEO_BASE}/djloop.mp4`, loops: 10 },
-  { src: `${VIDEO_BASE}/gate-video.mp4`, loops: 10 },
+const VIDEOS = [
+  { src: '/djloop.mp4', loops: 10 },
+  { src: '/gate-video.mp4', loops: 10 },
 ]
 
 interface Props {
@@ -16,101 +14,25 @@ interface Props {
 
 export default function VideoStream({ className, style }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const hlsRef = useRef<any>(null)
-  const [useStream, setUseStream] = useState(true)
+  const loopCount = useRef(0)
   const [videoIndex, setVideoIndex] = useState(0)
   const [videoFade, setVideoFade] = useState(true)
-  const loopCount = useRef(0)
-
-  // HLS stream setup
-  useEffect(() => {
-    if (!useStream || !videoRef.current) return
-    const video = videoRef.current
-
-    // Native HLS support (Safari)
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = VIDEO_STREAM
-      video.play().catch(() => {})
-      return
-    }
-
-    // Use hls.js for other browsers
-    let hls: any = null
-    import('hls.js').then((Hls) => {
-      const HlsClass = Hls.default
-      if (!HlsClass.isSupported()) {
-        setUseStream(false)
-        return
-      }
-      hls = new HlsClass()
-      hlsRef.current = hls
-      hls.loadSource(VIDEO_STREAM)
-      hls.attachMedia(video)
-      hls.on(HlsClass.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {})
-      })
-      hls.on(HlsClass.Events.ERROR, (_: any, data: any) => {
-        if (data.fatal) {
-          setUseStream(false)
-        }
-      })
-    }).catch(() => setUseStream(false))
-
-    return () => {
-      if (hls) { hls.destroy(); hlsRef.current = null }
-    }
-  }, [useStream])
-
-  const videoProps = {
-    ref: videoRef,
-    autoPlay: true,
-    muted: true,
-    playsInline: true,
-    disablePictureInPicture: true,
-    controlsList: 'nodownload nofullscreen noremoteplayback' as const,
-    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
-  }
-
-  const liveDot = (
-    <span style={{
-      position: 'absolute', top: 8, left: 8,
-      display: 'flex', alignItems: 'center', gap: 4,
-      fontSize: '0.55rem', letterSpacing: '0.08em',
-      color: 'rgba(255,255,255,0.85)', textTransform: 'uppercase',
-      pointerEvents: 'none', zIndex: 1,
-    }}>
-      <span style={{
-        width: 6, height: 6, borderRadius: '50%',
-        background: '#e33',
-        boxShadow: '0 0 4px 1px rgba(227,51,51,0.7)',
-        animation: 'livePulse 2s ease-in-out infinite',
-      }} />
-      LIVE
-      <style>{`@keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
-    </span>
-  )
-
-  if (useStream) {
-    return (
-      <div style={{ position: 'relative', lineHeight: 0 }}>
-        {liveDot}
-        <video
-          {...videoProps}
-          className={className}
-          style={{ pointerEvents: 'none', display: 'block', width: '100%', ...style }}
-        />
-      </div>
-    )
-  }
 
   return (
     <video
-      {...videoProps}
+      ref={videoRef}
+      autoPlay
+      muted
+      playsInline
+      disablePictureInPicture
+      controlsList={'nodownload nofullscreen noremoteplayback' as any}
+      onContextMenu={(e) => e.preventDefault()}
       className={className}
+      src={VIDEOS[videoIndex].src}
       onCanPlay={() => setVideoFade(true)}
       onTimeUpdate={() => {
         const v = videoRef.current
-        const current = FALLBACK_VIDEOS[videoIndex]
+        const current = VIDEOS[videoIndex]
         if (!v || !v.duration) return
         const remaining = v.duration - v.currentTime
         if (remaining <= 0.6 && loopCount.current >= (current.loops || 1) - 1 && videoFade) {
@@ -118,7 +40,7 @@ export default function VideoStream({ className, style }: Props) {
         }
       }}
       onEnded={() => {
-        const current = FALLBACK_VIDEOS[videoIndex]
+        const current = VIDEOS[videoIndex]
         loopCount.current++
         if (loopCount.current < (current.loops || 1)) {
           const v = videoRef.current
@@ -126,11 +48,10 @@ export default function VideoStream({ className, style }: Props) {
         } else {
           loopCount.current = 0
           setTimeout(() => {
-            setVideoIndex((i) => (i + 1) % FALLBACK_VIDEOS.length)
+            setVideoIndex((i) => (i + 1) % VIDEOS.length)
           }, 100)
         }
       }}
-      src={FALLBACK_VIDEOS[videoIndex].src}
       style={{ pointerEvents: 'none', opacity: videoFade ? 1 : 0, transition: 'opacity 0.5s ease', ...style }}
     />
   )
