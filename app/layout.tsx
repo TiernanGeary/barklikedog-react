@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Header from '@/components/Header'
 import MogensenBackground from '@/components/MogensenBackground'
+import RadioToggle from '@/components/RadioToggle'
 import PageTransition from '@/components/PageTransition'
 import { SanityLive } from '@/sanity/lib/live'
 import { isComingSoon } from '@/lib/sanity'
@@ -32,6 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </a>
           </footer>
         )}
+        <RadioToggle />
         <SanityLive />
       </body>
     </html>

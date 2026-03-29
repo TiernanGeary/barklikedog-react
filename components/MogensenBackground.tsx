@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
 const DEFAULT_PALETTE = [
   // pastels
@@ -224,16 +224,13 @@ interface Props {
 export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrounds = DEFAULT_BGS, mode: forcedMode }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef(0)
-  const modeRef = useRef<Mode>(forcedMode || pick(MODES))
-  const pairRef = useRef<{ fg: string; bg: string } | null>(null)
-  if (!pairRef.current) {
-    const fg = pick(palette)
-    let bg = pick(backgrounds)
-    while (bg === fg && backgrounds.length > 1) bg = pick(backgrounds)
-    pairRef.current = { fg, bg }
-  }
-  const colorRef = useRef(pairRef.current.fg)
-  const bgRef = useRef(pairRef.current.bg)
+  const [cycle, setCycle] = useState(0)
+
+  // Regenerate every 30 seconds
+  useEffect(() => {
+    const timer = setInterval(() => setCycle(c => c + 1), 30_000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -241,13 +238,20 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Pick fresh random values each cycle
+    const mode = forcedMode || pick(MODES)
+    const color = pick(palette)
+    let bg = pick(backgrounds)
+    while (bg === color && backgrounds.length > 1) bg = pick(backgrounds)
+
     let stopped = false
-    const mode = modeRef.current
-    const color = colorRef.current
-    const bg = bgRef.current
+
+    // Expose colors as CSS custom properties for other components
+    document.documentElement.style.setProperty('--panel-color', color)
+    document.documentElement.style.setProperty('--bg-color', bg)
 
     // Grain: regenerate noise each frame for a living, animated grain effect
-    const grainSize = 128
+    const grainSize = 256
     const grainCanvas = document.createElement('canvas')
     grainCanvas.width = grainSize
     grainCanvas.height = grainSize
@@ -260,7 +264,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         grainData.data[i] = v
         grainData.data[i + 1] = v
         grainData.data[i + 2] = v
-        grainData.data[i + 3] = 20
+        grainData.data[i + 3] = 30
       }
       grainCtx.putImageData(grainData, 0, 0)
       const pattern = ctx!.createPattern(grainCanvas, 'repeat')
@@ -271,8 +275,8 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
     }
 
     function setup() {
-      const w = window.innerWidth
-      const h = window.innerHeight
+      const w = window.visualViewport?.width ?? window.innerWidth
+      const h = window.visualViewport?.height ?? window.innerHeight
       canvas!.width = w
       canvas!.height = h
       return { w, h }
@@ -352,7 +356,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       clearTimeout(resizeTimer)
       window.removeEventListener('resize', onResize)
     }
-  }, [palette, backgrounds, forcedMode])
+  }, [palette, backgrounds, forcedMode, cycle])
 
   return (
     <canvas
@@ -362,7 +366,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         top: 0,
         left: 0,
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         zIndex: -1,
         pointerEvents: 'none',
       }}
