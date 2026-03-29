@@ -10,6 +10,7 @@ const DEFAULT_PALETTE = [
 ]
 
 const DEFAULT_BGS = [
+  '#ffffff',
   // pastels
   '#A8C8F5', '#B2E4C3', '#FAF0A8', '#F7A8D8', '#F5A8A8',
   // brand
@@ -245,6 +246,30 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
     const color = colorRef.current
     const bg = bgRef.current
 
+    // Grain: regenerate noise each frame for a living, animated grain effect
+    const grainSize = 128
+    const grainCanvas = document.createElement('canvas')
+    grainCanvas.width = grainSize
+    grainCanvas.height = grainSize
+    const grainCtx = grainCanvas.getContext('2d')!
+    const grainData = grainCtx.createImageData(grainSize, grainSize)
+
+    function applyGrain(w: number, h: number) {
+      for (let i = 0; i < grainData.data.length; i += 4) {
+        const v = Math.random() * 255
+        grainData.data[i] = v
+        grainData.data[i + 1] = v
+        grainData.data[i + 2] = v
+        grainData.data[i + 3] = 20
+      }
+      grainCtx.putImageData(grainData, 0, 0)
+      const pattern = ctx!.createPattern(grainCanvas, 'repeat')
+      if (pattern) {
+        ctx!.fillStyle = pattern
+        ctx!.fillRect(0, 0, w, h)
+      }
+    }
+
     function setup() {
       const w = window.innerWidth
       const h = window.innerHeight
@@ -262,6 +287,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       for (const p of panels) {
         ctx!.fillRect(p.x, p.y, p.w, p.h)
       }
+      applyGrain(w, h)
     }
 
     function animate(panels: Rect[], w: number, h: number) {
@@ -287,8 +313,10 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
           ctx!.fillRect(panels[i].x, panels[i].y, panels[i].w, panels[i].h)
         }
         ctx!.globalAlpha = 1
+        applyGrain(w, h)
 
-        if (!done) rafRef.current = requestAnimationFrame(frame)
+        // Keep looping for animated grain even after panels are done
+        rafRef.current = requestAnimationFrame(frame)
       }
       rafRef.current = requestAnimationFrame(frame)
     }
@@ -307,7 +335,13 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         cancelAnimationFrame(rafRef.current)
         const { w: nw, h: nh } = setup()
         const np = buildPanels(mode, nw, nh)
-        drawAll(np, nw, nh)
+        // Restart a grain-only loop with the new panels
+        function grainLoop() {
+          if (stopped) return
+          drawAll(np, nw, nh)
+          rafRef.current = requestAnimationFrame(grainLoop)
+        }
+        rafRef.current = requestAnimationFrame(grainLoop)
       }, 300)
     }
     window.addEventListener('resize', onResize)
