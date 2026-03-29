@@ -18,10 +18,10 @@ const DEFAULT_BGS = [
 ]
 const PAD = 0.05 // 5% padding on each side
 
-type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum'
-const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum']
+type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split'
+const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split']
 
-interface Rect { x: number; y: number; w: number; h: number; circle?: boolean; color?: string }
+interface Rect { x: number; y: number; w: number; h: number; circle?: boolean; color?: string; delay?: number }
 
 function pick<T>(a: T[]): T { return a[Math.floor(Math.random() * a.length)] }
 
@@ -349,8 +349,212 @@ function buildSpectrum(vw: number, vh: number, palette: string[]): Rect[] {
   return rects
 }
 
+// ── Albers helper: build one nested-square composition ──────────────────────
+function buildAlbersCell(
+  cx: number, cy: number, cellW: number, cellH: number,
+  colors: string[], delayBase: number, innerStagger: number
+): Rect[] {
+  const count = colors.length // 3 or 4
+  const outerSize = Math.min(cellW, cellH) * 0.75
+  // Albers formula: border unit = outerSize / (count * 4 + 2)
+  // Each step inward: bottom -= 1u, sides -= 2u, top -= 3u
+  const unit = outerSize / (count * 4 + 2)
+
+  const rects: Rect[] = []
+  let currentW = outerSize
+  let currentH = outerSize
+  // Start position: centered horizontally, offset toward bottom
+  let currentX = cx - outerSize / 2
+  let currentY = cy - outerSize / 2 + unit * (count - 1) // push down
+
+  for (let i = 0; i < count; i++) {
+    rects.push({
+      x: currentX,
+      y: currentY,
+      w: currentW,
+      h: currentH,
+      color: colors[i],
+      delay: delayBase + i * innerStagger,
+    })
+    // Step inward with 1:2:3 ratio (bottom:sides:top)
+    currentX += unit * 2   // sides: 2u each
+    currentY += unit * 3   // top: 3u
+    currentW -= unit * 4   // 2u left + 2u right
+    currentH -= unit * 4   // 3u top + 1u bottom
+  }
+
+  return rects
+}
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// ── MODE I: Homage to the Square (single) ───────────────────────────────────
+function buildAlbers(vw: number, vh: number, palette: string[], bg: string): Rect[] {
+  const count = Math.random() < 0.5 ? 3 : 4
+  const allColors = shuffleArray([...palette, bg])
+  const colors = allColors.slice(0, count)
+  return buildAlbersCell(vw / 2, vh / 2, vw, vh, colors, 0, 200)
+}
+
+// ── MODE J: Homage Grid (tiled) ────────────────────────────────────────────
+function buildAlbersGrid(vw: number, vh: number, palette: string[], bg: string): Rect[] {
+  const gridN = Math.random() < 0.5 ? 3 : 4
+  const gap = 12
+  const cellW = (vw - gap * (gridN + 1)) / gridN
+  const cellH = (vh - gap * (gridN + 1)) / gridN
+  const allColors = [...palette, bg]
+
+  const rects: Rect[] = []
+  let cellIdx = 0
+  for (let row = 0; row < gridN; row++) {
+    for (let col = 0; col < gridN; col++) {
+      const cx = gap + col * (cellW + gap) + cellW / 2
+      const cy = gap + row * (cellH + gap) + cellH / 2
+      const count = Math.random() < 0.5 ? 3 : 4
+      const colors = shuffleArray(allColors).slice(0, count)
+      const cellDelay = cellIdx * 80
+      const cellRects = buildAlbersCell(cx, cy, cellW, cellH, colors, cellDelay, 120)
+      rects.push(...cellRects)
+      cellIdx++
+    }
+  }
+
+  return rects
+}
+
+// ── MODE K: Colors for a Large Wall ─────────────────────────────────────────
+function buildColorwall(vw: number, vh: number, palette: string[]): Rect[] {
+  const n = 16
+  const cellSize = Math.min(vw, vh) / n
+  const ox = (vw - cellSize * n) / 2
+  const oy = (vh - cellSize * n) / 2
+  const colors = palette.slice(0, 5)
+  const center = (n - 1) / 2
+
+  const rects: Rect[] = []
+  for (let col = 0; col < n; col++) {
+    for (let row = 0; row < n; row++) {
+      // Distance from center normalized to 0-1
+      const dx = (col - center) / center
+      const dy = (row - center) / center
+      const dist = Math.sqrt(dx * dx + dy * dy) // 0 at center, ~1.41 at corners
+
+      // Probability: 1.0 at center, fading to ~0.05 at edges
+      const prob = Math.max(0.05, 1 - dist * 0.85)
+      if (Math.random() > prob) continue
+
+      const colorIdx = (col + row) % colors.length
+      const dist01 = Math.sqrt(dx * dx + dy * dy) / 1.42 // normalize to 0-1
+      rects.push({
+        x: ox + col * cellSize,
+        y: oy + row * cellSize,
+        w: cellSize,
+        h: cellSize,
+        color: colors[colorIdx],
+        delay: dist01 * 1200, // center appears first, edges last
+      })
+    }
+  }
+  return rects
+}
+
+// ── MODE L: Horizontal Spectrum Bands ───────────────────────────────────────
+function buildHbands(vw: number, vh: number, palette: string[]): Rect[] {
+  const count = 3 + Math.floor(Math.random() * 3) // 3-5 bands
+  const colors = shuffleArray(palette).slice(0, count)
+  // Ensure no two adjacent bands share a color
+  for (let i = 1; i < colors.length; i++) {
+    if (colors[i] === colors[i - 1]) {
+      const swap = colors.find((c, j) => j > i && c !== colors[i - 1])
+      if (swap) {
+        const si = colors.indexOf(swap, i + 1)
+        ;[colors[i], colors[si]] = [colors[si], colors[i]]
+      }
+    }
+  }
+
+  // Random weights for band heights
+  const weights: number[] = []
+  for (let i = 0; i < count; i++) weights.push(0.5 + Math.random())
+  const totalWeight = weights.reduce((a, b) => a + b, 0)
+
+  const rects: Rect[] = []
+  let y = vh // start from bottom
+  for (let i = 0; i < count; i++) {
+    const h = (weights[i] / totalWeight) * vh
+    y -= h
+    rects.push({
+      x: 0,
+      y,
+      w: vw,
+      h,
+      color: colors[i % colors.length],
+      delay: i * 80, // bottom to top, 80ms stagger
+    })
+  }
+  return rects
+}
+
+// ── MODE M: Two Panel Split ────────────────────────────────────────────────
+function buildSplit(vw: number, vh: number, palette: string[]): Rect[] {
+  const threePanel = Math.random() < 0.2
+  const vertical = Math.random() < 0.5
+  const colors = shuffleArray(palette)
+
+  if (threePanel) {
+    // Two split lines, three zones
+    const r1 = 0.2 + Math.random() * 0.3 // 20-50%
+    const r2 = r1 + 0.15 + Math.random() * 0.25 // at least 15% gap, up to 50-90%
+    const ratios = [r1, r2 - r1, 1 - r2]
+
+    const rects: Rect[] = []
+    let pos = 0
+    for (let i = 0; i < 3; i++) {
+      const size = ratios[i] * (vertical ? vw : vh)
+      // Ensure no adjacent same color
+      let c = colors[i % colors.length]
+      if (i > 0 && c === rects[i - 1].color) c = colors[(i + 1) % colors.length]
+
+      if (vertical) {
+        rects.push({ x: pos, y: 0, w: size, h: vh, color: c, delay: i * 150 })
+      } else {
+        rects.push({ x: 0, y: pos, w: vw, h: size, color: c, delay: i * 150 })
+      }
+      pos += size
+    }
+    return rects
+  }
+
+  // Two zones
+  const ratio = 0.3 + Math.random() * 0.4 // 30-70%
+  const c1 = colors[0]
+  let c2 = colors[1]
+  if (c2 === c1) c2 = colors[2] || colors[1]
+
+  if (vertical) {
+    const split = vw * ratio
+    return [
+      { x: 0, y: 0, w: split, h: vh, color: c1, delay: 0 },
+      { x: split, y: 0, w: vw - split, h: vh, color: c2, delay: 0 },
+    ]
+  } else {
+    const split = vh * ratio
+    return [
+      { x: 0, y: 0, w: vw, h: split, color: c1, delay: 0 },
+      { x: 0, y: split, w: vw, h: vh - split, color: c2, delay: 0 },
+    ]
+  }
+}
+
 // ── Builder dispatch ────────────────────────────────────────────────────────
-function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[]): Rect[] {
+function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[], bg?: string): Rect[] {
   switch (mode) {
     case 'grid': return buildGrid(vw, vh)
     case 'morse': return buildMorse(vw, vh)
@@ -360,6 +564,11 @@ function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[]): Re
     case 'edge': return buildEdge(vw, vh)
     case 'golden': return buildGolden(vw, vh)
     case 'spectrum': return buildSpectrum(vw, vh, palette || DEFAULT_PALETTE)
+    case 'albers': return buildAlbers(vw, vh, palette || DEFAULT_PALETTE, bg || '#ffffff')
+    case 'albers-grid': return buildAlbersGrid(vw, vh, palette || DEFAULT_PALETTE, bg || '#ffffff')
+    case 'colorwall': return buildColorwall(vw, vh, palette || DEFAULT_PALETTE)
+    case 'hbands': return buildHbands(vw, vh, palette || DEFAULT_PALETTE)
+    case 'split': return buildSplit(vw, vh, palette || DEFAULT_PALETTE)
   }
 }
 
@@ -467,7 +676,8 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         let done = true
 
         for (let i = 0; i < panels.length; i++) {
-          const t = Math.min(1, Math.max(0, (elapsed - i * STAGGER) / FADE))
+          const panelDelay = panels[i].delay ?? i * STAGGER
+          const t = Math.min(1, Math.max(0, (elapsed - panelDelay) / FADE))
           if (t <= 0) { done = false; continue }
           if (t < 1) done = false
           ctx!.globalAlpha = 1 - (1 - t) * (1 - t) // ease-out
@@ -484,7 +694,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
 
     // Initial draw + animate
     const { w, h } = setup()
-    const panels = buildPanels(mode, w, h, palette)
+    const panels = buildPanels(mode, w, h, palette, bg)
     animate(panels, w, h)
 
     // Resize: debounce 300ms, redraw final state
@@ -495,7 +705,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         if (stopped) return
         cancelAnimationFrame(rafRef.current)
         const { w: nw, h: nh } = setup()
-        const np = buildPanels(mode, nw, nh, palette)
+        const np = buildPanels(mode, nw, nh, palette, bg)
         // Restart a grain-only loop with the new panels
         function grainLoop() {
           if (stopped) return
