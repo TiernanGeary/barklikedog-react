@@ -101,6 +101,18 @@ export default function ProductDetail({ product }: Props) {
             )}
           </div>
 
+          {product.shortDescription && (
+            <div className="product-description">
+              <p>{product.shortDescription}</p>
+            </div>
+          )}
+
+          {product.description && (
+            <div className="entry-content">
+              <PortableText value={product.description} />
+            </div>
+          )}
+
           {product.year && (
             <div className="product-meta-item">
               <span className="product-meta-label">Year: </span>
@@ -151,18 +163,6 @@ export default function ProductDetail({ product }: Props) {
                   </button>
                 </div>
               )}
-            </div>
-          )}
-
-          {product.shortDescription && (
-            <div className="product-description">
-              <p>{product.shortDescription}</p>
-            </div>
-          )}
-
-          {product.description && (
-            <div className="entry-content" style={{ marginTop: '30px' }}>
-              <PortableText value={product.description} />
             </div>
           )}
         </div>
