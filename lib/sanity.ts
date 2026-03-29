@@ -6,7 +6,9 @@ import type { Product, Post, MediaItem, Page, Category, SanityImage, RadioQueue,
 
 export async function isComingSoon(): Promise<boolean> {
   const settings = await client.fetch(
-    `*[_type == "siteSettings" && _id == "siteSettings"][0] { comingSoon }`
+    `*[_type == "siteSettings" && _id == "siteSettings"][0] { comingSoon }`,
+    {},
+    { next: { revalidate: 30 } }
   )
   return settings?.comingSoon ?? false
 }
