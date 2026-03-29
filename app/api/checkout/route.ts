@@ -7,6 +7,9 @@ function getStripe() {
   })
 }
 
+const SHIPPING_US = 'shr_1TGBaRGimJhzx282226Uap6y'
+const SHIPPING_INTL = 'shr_1TGBasGimJhzx282flq9Yryb'
+
 export async function POST(req: NextRequest) {
   try {
     const { items } = await req.json()
@@ -26,6 +29,18 @@ export async function POST(req: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items,
+      shipping_address_collection: {
+        allowed_countries: [
+          'US', 'CA', 'MX', 'GB', 'IE', 'DE', 'FR', 'IT', 'ES', 'NL',
+          'BE', 'AT', 'CH', 'SE', 'DK', 'NO', 'FI', 'PT', 'PL', 'CZ',
+          'AU', 'NZ', 'JP', 'KR', 'SG', 'HK', 'TW', 'BR', 'AR', 'CL',
+          'CO', 'IL', 'AE', 'SA', 'TH', 'MY', 'PH', 'IN', 'ZA',
+        ],
+      },
+      shipping_options: [
+        { shipping_rate: SHIPPING_US },
+        { shipping_rate: SHIPPING_INTL },
+      ],
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,
     })
