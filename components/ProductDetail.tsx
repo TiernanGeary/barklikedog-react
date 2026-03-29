@@ -3,8 +3,10 @@
 import { useState, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { PortableText } from 'next-sanity'
 import type { Product } from '@/lib/types'
+import { useCart } from './CartProvider'
 
 interface Props {
   product: Product
@@ -13,7 +15,9 @@ interface Props {
 export default function ProductDetail({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState<string>('')
-  const [loading, setLoading] = useState(false)
+  const [added, setAdded] = useState(false)
+  const { addItem } = useCart()
+  const router = useRouter()
 
   const matchedVariant = useMemo(() => {
     if (!selectedVariant || !product.variants) return null
@@ -27,29 +31,18 @@ export default function ProductDetail({ product }: Props) {
 
   const priceId = matchedVariant?.stripePriceId ?? product.stripePriceId
 
-  const handleBuy = useCallback(async () => {
+  const handleAddToCart = useCallback(() => {
     if (!priceId) return
-    setLoading(true)
-    try {
-      const res = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId }),
-      })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        console.error('Checkout error:', data.error)
-        alert(data.error || 'Checkout failed')
-      }
-    } catch (err) {
-      console.error('Checkout error:', err)
-      alert('Something went wrong. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }, [priceId])
+    addItem({
+      priceId,
+      name: product.name + (matchedVariant ? ` — ${matchedVariant.option}` : ''),
+      price: displayPrice,
+      image: images[0]?.asset?.url,
+      variant: matchedVariant?.option,
+    })
+    setAdded(true)
+    setTimeout(() => setAdded(false), 1500)
+  }, [priceId, addItem, product.name, matchedVariant, displayPrice, images])
 
   const variantNames = useMemo(() => {
     if (!product.variants?.length) return []
@@ -140,10 +133,10 @@ export default function ProductDetail({ product }: Props) {
           {priceId && (
             <button
               className="buy-button"
-              onClick={handleBuy}
-              disabled={loading || (product.productType === 'variable' && !selectedVariant)}
+              onClick={handleAddToCart}
+              disabled={product.productType === 'variable' && !selectedVariant}
             >
-              {loading ? 'Redirecting...' : 'Add to Cart'}
+              {added ? 'Added ✓' : 'Add to Cart'}
             </button>
           )}
 

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Header from '@/components/Header'
+import { CartProvider } from '@/components/CartProvider'
 import Footer from '@/components/Footer'
 import HomeBackground from '@/components/HomeBackground'
 import PageTransition from '@/components/PageTransition'
@@ -18,6 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
+        <CartProvider>
         <HomeBackground />
         <Header comingSoon={comingSoon} />
         <PageTransition>
@@ -27,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </PageTransition>
         {!comingSoon && <Footer />}
         <SanityLive />
+        </CartProvider>
       </body>
     </html>
   )

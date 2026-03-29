@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRef, useState, useEffect } from 'react'
+import { useCart } from './CartProvider'
 
 const LOGO_COLORS = [
   { color: '#ffffff', weight: 4 },
@@ -99,6 +100,7 @@ function DashedBorder() {
 export default function Header({ comingSoon = false }: { comingSoon?: boolean }) {
   const pathname = usePathname()
   const logoColor = useRef(pickWeighted())
+  const { count } = useCart()
 
   function isActive(href: string): boolean {
     if (href === '/') return pathname === '/'
@@ -137,6 +139,9 @@ export default function Header({ comingSoon = false }: { comingSoon?: boolean })
               </li>
             ))}
           </ul>
+          <Link href="/cart" className={`nav-cart${isActive('/cart') ? ' current' : ''}`}>
+            Cart{count > 0 ? ` (${count})` : ''}
+          </Link>
         </nav>
       )}
     </>
