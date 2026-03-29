@@ -13,8 +13,14 @@ export default function RadioToggle() {
   const [color, setColor] = useState('#333')
 
   useEffect(() => {
-    const c = getComputedStyle(document.documentElement).getPropertyValue('--panel-color').trim()
-    if (c) setColor(c)
+    function read() {
+      const c = getComputedStyle(document.documentElement).getPropertyValue('--panel-color').trim()
+      if (c) setColor(c)
+    }
+    read()
+    const observer = new MutationObserver(read)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
