@@ -664,7 +664,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       }
     }
 
-    const dpr = window.devicePixelRatio || 1
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
 
     function setup() {
       const w = window.visualViewport?.width ?? window.innerWidth
