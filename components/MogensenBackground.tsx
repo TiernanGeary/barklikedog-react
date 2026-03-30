@@ -664,11 +664,14 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       }
     }
 
+    const dpr = window.devicePixelRatio || 1
+
     function setup() {
       const w = window.visualViewport?.width ?? window.innerWidth
       const h = window.visualViewport?.height ?? window.innerHeight
-      canvas!.width = w
-      canvas!.height = h
+      canvas!.width = w * dpr
+      canvas!.height = h * dpr
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0)
       return { w, h }
     }
 
