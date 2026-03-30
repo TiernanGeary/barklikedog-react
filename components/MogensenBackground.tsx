@@ -719,6 +719,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
           drawPanel(panels[i])
         }
         ctx!.globalAlpha = 1
+        applyGrain(w, h)
 
         if (!done) {
           rafRef.current = requestAnimationFrame(frame)
