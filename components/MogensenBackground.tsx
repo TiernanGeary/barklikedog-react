@@ -18,10 +18,10 @@ const DEFAULT_BGS = [
 ]
 const PAD = 0.05 // 5% padding on each side
 
-type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split' | 'quote'
-const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split', 'quote']
+type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split' | 'quote' | 'someone-great'
+const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split', 'quote', 'someone-great']
 
-interface Rect { x: number; y: number; w: number; h: number; circle?: boolean; color?: string; delay?: number; text?: string; fontSize?: number }
+interface Rect { x: number; y: number; w: number; h: number; circle?: boolean; color?: string; delay?: number; fade?: number; text?: string; fontSize?: number }
 
 function pick<T>(a: T[]): T { return a[Math.floor(Math.random() * a.length)] }
 
@@ -584,6 +584,36 @@ function buildQuote(vw: number, vh: number): Rect[] {
   }))
 }
 
+// ── MODE O: Someone Great ───────────────────────────────────────────────────
+function buildSomeoneGreat(vw: number, vh: number, palette: string[]): Rect[] {
+  const color = pick(palette)
+  const largeSize = vw * 0.32
+  const smallSize = vw * 0.22
+
+  return [
+    // Small square — appears first (delay 0, 500ms fade)
+    {
+      x: vw * 0.54,
+      y: vh * 0.30,
+      w: smallSize,
+      h: smallSize,
+      color,
+      delay: 0,
+      fade: 500,
+    },
+    // Large square — appears second (delay 800 = 500ms fade + 300ms pause, 600ms fade)
+    {
+      x: vw * 0.13,
+      y: vh * 0.18,
+      w: largeSize,
+      h: largeSize,
+      color,
+      delay: 800,
+      fade: 600,
+    },
+  ]
+}
+
 // ── Builder dispatch ────────────────────────────────────────────────────────
 function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[], bg?: string): Rect[] {
   switch (mode) {
@@ -601,6 +631,7 @@ function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[], bg?
     case 'hbands': return buildHbands(vw, vh, palette || DEFAULT_PALETTE)
     case 'split': return buildSplit(vw, vh, palette || DEFAULT_PALETTE)
     case 'quote': return buildQuote(vw, vh)
+    case 'someone-great': return buildSomeoneGreat(vw, vh, palette || DEFAULT_PALETTE)
   }
 }
 
@@ -631,8 +662,9 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
     // Pick fresh random values each cycle
     const mode = forcedMode || pick(MODES)
     const color = pick(palette)
-    let bg = mode === 'spectrum' ? '#F9F7F4' : pick(backgrounds)
-    while (bg === color && backgrounds.length > 1 && mode !== 'spectrum') bg = pick(backgrounds)
+    const forceBg = mode === 'spectrum' || mode === 'someone-great'
+    let bg = forceBg ? '#F9F7F4' : pick(backgrounds)
+    while (bg === color && backgrounds.length > 1 && !forceBg) bg = pick(backgrounds)
 
     let stopped = false
 
@@ -666,14 +698,23 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
 
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
 
-    function setup() {
-      const w = window.visualViewport?.width ?? window.innerWidth
-      const h = window.visualViewport?.height ?? window.innerHeight
+    function getSize() {
+      return {
+        w: window.visualViewport?.width ?? window.innerWidth,
+        h: window.visualViewport?.height ?? window.innerHeight,
+      }
+    }
+
+    function sizeCanvas(w: number, h: number) {
       canvas!.width = w * dpr
       canvas!.height = h * dpr
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0)
-      return { w, h }
     }
+
+    // Only resize canvas on first mount or actual resize — not on cycle change
+    const { w, h } = getSize()
+    const needsResize = canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)
+    if (needsResize) sizeCanvas(w, h)
 
     function drawPanel(p: Rect) {
       ctx!.fillStyle = p.color || color
@@ -715,7 +756,8 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
 
         for (let i = 0; i < panels.length; i++) {
           const panelDelay = panels[i].delay ?? i * STAGGER
-          const t = Math.min(1, Math.max(0, (elapsed - panelDelay) / FADE))
+          const panelFade = panels[i].fade ?? FADE
+          const t = Math.min(1, Math.max(0, (elapsed - panelDelay) / panelFade))
           if (t <= 0) { done = false; continue }
           if (t < 1) done = false
           ctx!.globalAlpha = 1 - (1 - t) * (1 - t) // ease-out
@@ -744,8 +786,6 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       rafRef.current = requestAnimationFrame(frame)
     }
 
-    // Initial draw + animate
-    const { w, h } = setup()
     // Fill bg immediately so there's no blank frame on regeneration
     ctx.fillStyle = bg
     ctx.fillRect(0, 0, w, h)
@@ -760,7 +800,8 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       resizeTimer = window.setTimeout(() => {
         if (stopped) return
         cancelAnimationFrame(rafRef.current)
-        const { w: nw, h: nh } = setup()
+        const { w: nw, h: nh } = getSize()
+        sizeCanvas(nw, nh)
         const np = buildPanels(mode, nw, nh, palette, bg)
         drawAll(np, nw, nh)
         let lastGrain = 0
@@ -796,6 +837,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         width: '100vw',
         height: '100dvh',
         zIndex: -1,
+        backgroundColor: '#F9F7F4',
         pointerEvents: 'none',
       }}
     />
