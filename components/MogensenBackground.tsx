@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from 'react'
 
 const DEFAULT_PALETTE = [
   // pastels
-  '#A8C8F5', '#B2E4C3', '#FAF0A8', '#F7A8D8', '#F5A8A8',
+  '#A8C8F5', '#B2E4C3', '#FAF0A8', '#F7A8D8', '#F5A8A8', '#c6c6c6',
   // brand (softer mid-tones)
   '#518EE4', '#83D29E', '#F6DE69', '#EF43AD', '#ED4D4D',
 ]
@@ -18,8 +18,8 @@ const DEFAULT_BGS = [
 ]
 const PAD = 0.05 // 5% padding on each side
 
-type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split' | 'quote' | 'someone-great'
-const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split', 'quote', 'someone-great']
+type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split' | 'quote' | 'someone-great' | 'towers'
+const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split', 'quote', 'someone-great', 'towers']
 
 interface Rect { x: number; y: number; w: number; h: number; circle?: boolean; color?: string; delay?: number; fade?: number; text?: string; fontSize?: number }
 
@@ -632,6 +632,7 @@ function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[], bg?
     case 'split': return buildSplit(vw, vh, palette || DEFAULT_PALETTE)
     case 'quote': return buildQuote(vw, vh)
     case 'someone-great': return buildSomeoneGreat(vw, vh, palette || DEFAULT_PALETTE)
+    case 'towers': return [] // handled by custom animateTowers
   }
 }
 
@@ -786,12 +787,118 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       rafRef.current = requestAnimationFrame(frame)
     }
 
+    // ── Towers mode: custom drawing ──────────────────────────────────────────
+    function drawTower(cx: number, halfW: number, h: number, depth: number, vw: number, vh: number, drawAntenna: boolean, antennaAlpha: number) {
+      const base = vh
+      // Full pentagon fill
+      ctx!.beginPath()
+      ctx!.moveTo(cx - halfW, base)
+      ctx!.lineTo(cx + halfW, base)
+      ctx!.lineTo(cx + halfW, base - h)
+      ctx!.lineTo(cx, base - h - depth)
+      ctx!.lineTo(cx - halfW, base - h)
+      ctx!.closePath()
+      ctx!.fill()
+
+      // Left face darker (85% opacity)
+      const prevAlpha = ctx!.globalAlpha
+      ctx!.globalAlpha = prevAlpha * 0.85
+      ctx!.beginPath()
+      ctx!.moveTo(cx - halfW, base)
+      ctx!.lineTo(cx, base)
+      ctx!.lineTo(cx, base - h - depth)
+      ctx!.lineTo(cx - halfW, base - h)
+      ctx!.closePath()
+      ctx!.fill()
+      ctx!.globalAlpha = prevAlpha
+
+      // Antenna
+      if (drawAntenna && antennaAlpha > 0) {
+        const antennaH = vh * 0.12
+        const antennaBase = base - h - depth
+        ctx!.globalAlpha = prevAlpha * antennaAlpha
+        ctx!.beginPath()
+        ctx!.moveTo(cx - 1.5, antennaBase)
+        ctx!.lineTo(cx + 1.5, antennaBase)
+        ctx!.lineTo(cx + 0.5, antennaBase - antennaH)
+        ctx!.lineTo(cx - 0.5, antennaBase - antennaH)
+        ctx!.closePath()
+        ctx!.fill()
+        ctx!.globalAlpha = prevAlpha
+      }
+    }
+
+    function drawTowersScene(vw: number, vh: number, progress: number, antennaAlpha: number) {
+      ctx!.clearRect(0, 0, vw, vh)
+      ctx!.fillStyle = bg
+      ctx!.fillRect(0, 0, vw, vh)
+
+      const halfW = vw * 0.08
+      const depthMul = 0.35
+      const eased = 1 - (1 - progress) * (1 - progress) // easeOut
+
+      // Left tower (North — taller, antenna)
+      const lH = vh * 0.78 * eased
+      const lDepth = halfW * depthMul
+      ctx!.fillStyle = color
+      drawTower(vw * 0.38, halfW, lH, lDepth * eased, vw, vh, true, antennaAlpha)
+
+      // Right tower (South — shorter)
+      const rH = vh * 0.72 * eased
+      const rDepth = halfW * depthMul
+      ctx!.fillStyle = color
+      drawTower(vw * 0.62, halfW, rH, rDepth * eased, vw, vh, false, 0)
+
+      applyGrain(vw, vh)
+    }
+
+    function animateTowers(vw: number, vh: number) {
+      const RISE_DUR = 2400
+      const ANTENNA_DELAY = 100
+      const ANTENNA_DUR = 300
+      const t0 = performance.now()
+
+      function frame(now: number) {
+        if (stopped) return
+        const elapsed = now - t0
+        const towerProg = Math.min(1, elapsed / RISE_DUR)
+        const antennaProg = towerProg >= 1
+          ? Math.min(1, Math.max(0, (elapsed - RISE_DUR - ANTENNA_DELAY) / ANTENNA_DUR))
+          : 0
+        const antennaEased = 1 - (1 - antennaProg) * (1 - antennaProg)
+
+        drawTowersScene(vw, vh, towerProg, antennaEased)
+
+        const done = towerProg >= 1 && antennaProg >= 1
+        if (!done) {
+          rafRef.current = requestAnimationFrame(frame)
+        } else {
+          let lastGrain = 0
+          const GRAIN_INTERVAL = 1000 / 24
+          function grainLoop(now2: number) {
+            if (stopped) return
+            if (now2 - lastGrain >= GRAIN_INTERVAL) {
+              drawTowersScene(vw, vh, 1, 1)
+              lastGrain = now2
+            }
+            rafRef.current = requestAnimationFrame(grainLoop)
+          }
+          rafRef.current = requestAnimationFrame(grainLoop)
+        }
+      }
+      rafRef.current = requestAnimationFrame(frame)
+    }
+
     // Fill bg immediately so there's no blank frame on regeneration
     ctx.fillStyle = bg
     ctx.fillRect(0, 0, w, h)
 
-    const panels = buildPanels(mode, w, h, palette, bg)
-    animate(panels, w, h)
+    if (mode === 'towers') {
+      animateTowers(w, h)
+    } else {
+      const panels = buildPanels(mode, w, h, palette, bg)
+      animate(panels, w, h)
+    }
 
     // Resize: debounce 300ms, redraw final state
     let resizeTimer = 0
@@ -802,19 +909,35 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
         cancelAnimationFrame(rafRef.current)
         const { w: nw, h: nh } = getSize()
         sizeCanvas(nw, nh)
-        const np = buildPanels(mode, nw, nh, palette, bg)
-        drawAll(np, nw, nh)
-        let lastGrain = 0
-        const GRAIN_INTERVAL = 1000 / 24
-        function grainLoop(now: number) {
-          if (stopped) return
-          if (now - lastGrain >= GRAIN_INTERVAL) {
-            drawAll(np, nw, nh)
-            lastGrain = now
+
+        if (mode === 'towers') {
+          drawTowersScene(nw, nh, 1, 1)
+          let lastGrain = 0
+          const GRAIN_INTERVAL = 1000 / 24
+          function grainLoop(now: number) {
+            if (stopped) return
+            if (now - lastGrain >= GRAIN_INTERVAL) {
+              drawTowersScene(nw, nh, 1, 1)
+              lastGrain = now
+            }
+            rafRef.current = requestAnimationFrame(grainLoop)
+          }
+          rafRef.current = requestAnimationFrame(grainLoop)
+        } else {
+          const np = buildPanels(mode, nw, nh, palette, bg)
+          drawAll(np, nw, nh)
+          let lastGrain = 0
+          const GRAIN_INTERVAL = 1000 / 24
+          function grainLoop(now: number) {
+            if (stopped) return
+            if (now - lastGrain >= GRAIN_INTERVAL) {
+              drawAll(np, nw, nh)
+              lastGrain = now
+            }
+            rafRef.current = requestAnimationFrame(grainLoop)
           }
           rafRef.current = requestAnimationFrame(grainLoop)
         }
-        rafRef.current = requestAnimationFrame(grainLoop)
       }, 300)
     }
     window.addEventListener('resize', onResize)
