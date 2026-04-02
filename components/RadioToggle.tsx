@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react'
 
-const STREAM_URL = 'http://radio.barklike.dog/listen/bark_like_dog_radio/radio.mp3'
+const STREAM_URL = 'https://radio.barklike.dog/listen/bark_like_dog_radio/radio.mp3'
 
 export default function RadioToggle() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
