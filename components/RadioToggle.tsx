@@ -44,6 +44,37 @@ export default function RadioToggle() {
     }
   }, [])
 
+  function skipSong() {
+    fetch('/api/radio/skip-song', { method: 'POST' }).catch(() => {})
+    // Reconnect the stream after a short delay so the listener hears the new song
+    if (audioRef.current && playing) {
+      setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.src = ''
+          audioRef.current.src = STREAM_URL
+          audioRef.current.play().catch(() => {})
+        }
+      }, 1500)
+    }
+  }
+
+  // Register Media Session handlers (AirPods, lock screen controls, etc.)
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return
+    if (!playing) return
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: 'Bark Like Dog Radio',
+      artist: 'barklike.dog',
+    })
+
+    navigator.mediaSession.setActionHandler('nexttrack', skipSong)
+
+    return () => {
+      navigator.mediaSession.setActionHandler('nexttrack', null)
+    }
+  }, [playing, volume])
+
   function toggle() {
     if (!audioRef.current) {
       audioRef.current = new Audio(STREAM_URL)
