@@ -31,6 +31,7 @@ export default function RadioToggle() {
   useEffect(() => {
     function stop() {
       if (audioRef.current) {
+        audioRef.current.onpause = null
         audioRef.current.pause()
         audioRef.current.src = ''
         audioRef.current = null
@@ -82,6 +83,7 @@ export default function RadioToggle() {
       audioRef.current.volume = volume
     }
     if (playing) {
+      audioRef.current.onpause = null // disable auto-resume
       audioRef.current.pause()
       audioRef.current.src = ''
       audioRef.current = null
@@ -89,6 +91,16 @@ export default function RadioToggle() {
     } else {
       audioRef.current.src = STREAM_URL
       audioRef.current.play().catch(() => {})
+      // Auto-resume if audio gets interrupted (notifications, phone calls, etc.)
+      audioRef.current.onpause = () => {
+        if (audioRef.current && !audioRef.current.ended) {
+          setTimeout(() => {
+            if (audioRef.current) {
+              audioRef.current.play().catch(() => {})
+            }
+          }, 500)
+        }
+      }
       setPlaying(true)
     }
   }
