@@ -421,19 +421,19 @@ body.bg-fading #footer {
   font-size: 11px !important;
   font-family: 'Courier New', monospace !important;
   background: none !important;
-  border: 1px solid #333 !important;
-  color: #333 !important;
+  border: 1px solid #0059e7 !important;
+  color: #0059e7 !important;
   cursor: pointer;
   text-transform: lowercase;
   letter-spacing: 0.06em;
 }
 
 .variant-btn:hover {
-  background: #f0f0f0 !important;
+  background: rgba(0, 89, 231, 0.08) !important;
 }
 
 .variant-btn--active {
-  background: #333 !important;
+  background: #0059e7 !important;
   color: #fff !important;
 }
 
