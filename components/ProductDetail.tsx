@@ -126,19 +126,20 @@ export default function ProductDetail({ product }: Props) {
               {variantNames.map(name => (
                 <div key={name} className="variation-row">
                   <label>{name}</label>
-                  <select
-                    value={selectedVariant}
-                    onChange={e => setSelectedVariant(e.target.value)}
-                  >
-                    <option value="">Select {name}</option>
+                  <div className="variant-buttons">
                     {product.variants!
                       .filter(v => v.name === name)
                       .map(v => (
-                        <option key={v.option} value={v.option}>
+                        <button
+                          key={v.option}
+                          type="button"
+                          className={`variant-btn${selectedVariant === v.option ? ' variant-btn--active' : ''}`}
+                          onClick={() => setSelectedVariant(v.option)}
+                        >
                           {v.option}
-                        </option>
+                        </button>
                       ))}
-                  </select>
+                  </div>
                 </div>
               ))}
             </div>

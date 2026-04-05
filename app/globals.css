@@ -410,6 +410,33 @@ body.bg-fading #footer {
   opacity: 0.6;
 }
 
+.variant-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.variant-btn {
+  padding: 6px 14px !important;
+  font-size: 11px !important;
+  font-family: 'Courier New', monospace !important;
+  background: none !important;
+  border: 1px solid #333 !important;
+  color: #333 !important;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.variant-btn:hover {
+  background: #f0f0f0 !important;
+}
+
+.variant-btn--active {
+  background: #333 !important;
+  color: #fff !important;
+}
+
 .product-description {
   font-size: 12px;
   line-height: 1.6;
