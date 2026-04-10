@@ -11,6 +11,7 @@ export default function RadioToggle() {
   const [playing, setPlaying] = useState(false)
   const [volume, setVolume] = useState(0.6)
   const [color, setColor] = useState('#333')
+  const intentionalPause = useRef(false)
 
   useEffect(() => {
     function read() {
@@ -70,9 +71,27 @@ export default function RadioToggle() {
     })
 
     navigator.mediaSession.setActionHandler('nexttrack', skipSong)
+    navigator.mediaSession.setActionHandler('pause', () => {
+      intentionalPause.current = true
+      if (audioRef.current) audioRef.current.pause()
+      setPlaying(false)
+    })
+    navigator.mediaSession.setActionHandler('play', () => {
+      intentionalPause.current = false
+      if (!audioRef.current) {
+        audioRef.current = new Audio(STREAM_URL)
+        audioRef.current.crossOrigin = 'anonymous'
+        audioRef.current.volume = volume
+      }
+      audioRef.current.src = STREAM_URL
+      audioRef.current.play().catch(() => {})
+      setPlaying(true)
+    })
 
     return () => {
       navigator.mediaSession.setActionHandler('nexttrack', null)
+      navigator.mediaSession.setActionHandler('pause', null)
+      navigator.mediaSession.setActionHandler('play', null)
     }
   }, [playing, volume])
 
@@ -83,19 +102,21 @@ export default function RadioToggle() {
       audioRef.current.volume = volume
     }
     if (playing) {
-      audioRef.current.onpause = null // disable auto-resume
+      intentionalPause.current = true
       audioRef.current.pause()
       audioRef.current.src = ''
       audioRef.current = null
       setPlaying(false)
     } else {
+      intentionalPause.current = false
       audioRef.current.src = STREAM_URL
       audioRef.current.play().catch(() => {})
-      // Auto-resume if audio gets interrupted (notifications, phone calls, etc.)
+      // Auto-resume only if paused by an interruption (not user action)
       audioRef.current.onpause = () => {
+        if (intentionalPause.current) return
         if (audioRef.current && !audioRef.current.ended) {
           setTimeout(() => {
-            if (audioRef.current) {
+            if (audioRef.current && !intentionalPause.current) {
               audioRef.current.play().catch(() => {})
             }
           }, 500)
