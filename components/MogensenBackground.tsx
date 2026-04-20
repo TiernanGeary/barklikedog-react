@@ -648,10 +648,15 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
   const rafRef = useRef(0)
   const [cycle, setCycle] = useState(0)
 
-  // Regenerate every 30 seconds
+  // Regenerate every 30 seconds, or on demand via event
   useEffect(() => {
     const timer = setInterval(() => setCycle(c => c + 1), 30_000)
-    return () => clearInterval(timer)
+    const onRegenerate = () => setCycle(c => c + 1)
+    window.addEventListener('regenerate-background', onRegenerate)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('regenerate-background', onRegenerate)
+    }
   }, [])
 
   useEffect(() => {

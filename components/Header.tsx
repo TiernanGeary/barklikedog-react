@@ -111,7 +111,17 @@ export default function Header({ comingSoon = false }: { comingSoon?: boolean })
     <>
       <header id="site-header">
         <DashedBorder />
-        <Link href="/" className="header-logo" aria-label="rlynice home">
+        <Link
+          href="/"
+          className="header-logo"
+          aria-label="rlynice home"
+          onClick={e => {
+            if (pathname === '/') {
+              e.preventDefault()
+              window.dispatchEvent(new CustomEvent('regenerate-background'))
+            }
+          }}
+        >
           <svg viewBox="0 0 1186.05 344.44" xmlns="http://www.w3.org/2000/svg" style={{ height: 35, width: 'auto', display: 'block' }}>
             <g fill={logoColor.current}>
               <path d="M51.96,75.82v36.95h.77c2.56-6.16,6.03-11.86,10.39-17.13,4.36-5.26,9.36-9.75,15.01-13.47,5.64-3.72,11.67-6.6,18.09-8.66,6.41-2.05,13.08-3.08,20.01-3.08,3.59,0,7.56.64,11.93,1.92v50.8c-2.57-.51-5.65-.96-9.24-1.35-3.6-.38-7.06-.58-10.39-.58-10.01,0-18.47,1.67-25.4,5-6.93,3.34-12.51,7.89-16.74,13.66-4.23,5.77-7.25,12.51-9.04,20.2-1.8,7.7-2.69,16.04-2.69,25.02v89.67H0V75.82h51.96Z"/>
