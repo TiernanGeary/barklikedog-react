@@ -20,14 +20,15 @@ const LOGO_COLORS = [
   { color: '#ED4D4D', weight: 1 },
 ]
 
-function pickWeighted(): string {
-  const total = LOGO_COLORS.reduce((s, c) => s + c.weight, 0)
+function pickWeighted(excludeWhite = false): string {
+  const pool = excludeWhite ? LOGO_COLORS.filter(c => c.color !== '#ffffff') : LOGO_COLORS
+  const total = pool.reduce((s, c) => s + c.weight, 0)
   let r = Math.random() * total
-  for (const c of LOGO_COLORS) {
+  for (const c of pool) {
     r -= c.weight
     if (r <= 0) return c.color
   }
-  return LOGO_COLORS[0].color
+  return pool[0].color
 }
 
 const NAV_ITEMS = [
@@ -99,8 +100,15 @@ function DashedBorder() {
 
 export default function Header({ comingSoon = false }: { comingSoon?: boolean }) {
   const pathname = usePathname()
-  const logoColor = useRef(pickWeighted())
+  const [logoColor, setLogoColor] = useState(() => pickWeighted(pathname !== '/'))
   const { count } = useCart()
+
+  // Re-pick color without white when leaving home, to stay visible on white bg
+  useEffect(() => {
+    if (pathname !== '/' && logoColor === '#ffffff') {
+      setLogoColor(pickWeighted(true))
+    }
+  }, [pathname, logoColor])
 
   function isActive(href: string): boolean {
     if (href === '/') return pathname === '/'
@@ -123,7 +131,7 @@ export default function Header({ comingSoon = false }: { comingSoon?: boolean })
           }}
         >
           <svg viewBox="0 0 1186.05 344.44" xmlns="http://www.w3.org/2000/svg" style={{ height: 35, width: 'auto', display: 'block' }}>
-            <g fill={logoColor.current}>
+            <g fill={logoColor}>
               <path d="M51.96,75.82v36.95h.77c2.56-6.16,6.03-11.86,10.39-17.13,4.36-5.26,9.36-9.75,15.01-13.47,5.64-3.72,11.67-6.6,18.09-8.66,6.41-2.05,13.08-3.08,20.01-3.08,3.59,0,7.56.64,11.93,1.92v50.8c-2.57-.51-5.65-.96-9.24-1.35-3.6-.38-7.06-.58-10.39-.58-10.01,0-18.47,1.67-25.4,5-6.93,3.34-12.51,7.89-16.74,13.66-4.23,5.77-7.25,12.51-9.04,20.2-1.8,7.7-2.69,16.04-2.69,25.02v89.67H0V75.82h51.96Z"/>
               <path d="M205.89,0v274.78h-54.65V0h54.65Z"/>
               <path d="M322.5,334.05c-10.52,6.93-25.15,10.39-43.87,10.39-5.65,0-11.23-.19-16.74-.58-5.52-.38-11.1-.84-16.74-1.35v-45.03c5.13.51,10.39,1.02,15.78,1.54,5.39.51,10.78.64,16.16.38,7.18-.77,12.51-3.6,15.97-8.47,3.46-4.88,5.2-10.26,5.2-16.16,0-4.36-.77-8.47-2.31-12.32l-69.66-186.65h58.11l45.03,136.24h.77l43.49-136.24h56.57l-83.13,223.6c-5.91,16.16-14.11,27.71-24.63,34.64Z"/>
