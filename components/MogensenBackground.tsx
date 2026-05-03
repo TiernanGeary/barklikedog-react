@@ -18,8 +18,8 @@ const DEFAULT_BGS = [
 ]
 const PAD = 0.05 // 5% padding on each side
 
-type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split' | 'quote' | 'someone-great' | 'towers'
-const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split', 'quote', 'someone-great', 'towers']
+type Mode = 'grid' | 'morse' | 'spiral' | 'bands' | 'scatter' | 'edge' | 'golden' | 'spectrum' | 'albers' | 'albers-grid' | 'colorwall' | 'hbands' | 'split' | 'quote' | 'someone-great' | 'towers' | 'spots'
+const MODES: Mode[] = ['grid', 'morse', 'spiral', 'bands', 'scatter', 'edge', 'golden', 'spectrum', 'albers', 'albers-grid', 'colorwall', 'hbands', 'split', 'quote', 'someone-great', 'towers', 'spots']
 
 interface Rect { x: number; y: number; w: number; h: number; circle?: boolean; color?: string; delay?: number; fade?: number; text?: string; fontSize?: number }
 
@@ -614,6 +614,42 @@ function buildSomeoneGreat(vw: number, vh: number, palette: string[]): Rect[] {
   ]
 }
 
+// ── MODE P: Spot Painting (Damien Hirst) ────────────────────────────────────
+function buildSpots(vw: number, vh: number, palette: string[]): Rect[] {
+  const grids = [[6, 4], [8, 5], [10, 7]]
+  const [cols, rows] = grids[Math.floor(Math.random() * grids.length)]
+  const spacing = Math.min(vw / (cols * 2.2), vh / (rows * 2.2)) * 2.2
+  const diameter = spacing / 2.2
+  const gridW = (cols - 1) * spacing
+  const gridH = (rows - 1) * spacing
+  const ox = (vw - gridW) / 2
+  const oy = (vh - gridH) / 2
+  const colors = palette.slice(0, 10)
+
+  const rects: Rect[] = []
+  let idx = 0
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      // Offset per row so no adjacent horizontal/vertical match
+      const colorIdx = (col + row * 3) % colors.length
+      const cx = ox + col * spacing
+      const cy = oy + row * spacing
+      rects.push({
+        x: cx - diameter / 2,
+        y: cy - diameter / 2,
+        w: diameter,
+        h: diameter,
+        circle: true,
+        color: colors[colorIdx],
+        delay: idx * 40,
+        fade: 150,
+      })
+      idx++
+    }
+  }
+  return rects
+}
+
 // ── Builder dispatch ────────────────────────────────────────────────────────
 function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[], bg?: string): Rect[] {
   switch (mode) {
@@ -633,6 +669,7 @@ function buildPanels(mode: Mode, vw: number, vh: number, palette?: string[], bg?
     case 'quote': return buildQuote(vw, vh)
     case 'someone-great': return buildSomeoneGreat(vw, vh, palette || DEFAULT_PALETTE)
     case 'towers': return [] // handled by custom animateTowers
+    case 'spots': return buildSpots(vw, vh, palette || DEFAULT_PALETTE)
   }
 }
 
@@ -668,7 +705,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
     // Pick fresh random values each cycle
     const mode = forcedMode || pick(MODES)
     const color = pick(palette)
-    const forceBg = mode === 'spectrum' || mode === 'someone-great'
+    const forceBg = mode === 'spectrum' || mode === 'someone-great' || mode === 'spots'
     let bg = forceBg ? '#F9F7F4' : pick(backgrounds)
     while (bg === color && backgrounds.length > 1 && !forceBg) bg = pick(backgrounds)
 
