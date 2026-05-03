@@ -618,8 +618,8 @@ function buildSomeoneGreat(vw: number, vh: number, palette: string[]): Rect[] {
 function buildSpots(vw: number, vh: number, palette: string[]): Rect[] {
   const grids = [[6, 4], [8, 5], [10, 7]]
   const [cols, rows] = grids[Math.floor(Math.random() * grids.length)]
-  const spacing = Math.min(vw / (cols * 2.2), vh / (rows * 2.2)) * 2.2
-  const diameter = spacing / 2.2
+  const spacing = Math.min(vw / (cols * 3), vh / (rows * 3)) * 3
+  const diameter = spacing / 3.5
   const gridW = (cols - 1) * spacing
   const gridH = (rows - 1) * spacing
   const ox = (vw - gridW) / 2
@@ -630,7 +630,6 @@ function buildSpots(vw: number, vh: number, palette: string[]): Rect[] {
   let idx = 0
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      // Offset per row so no adjacent horizontal/vertical match
       const colorIdx = (col + row * 3) % colors.length
       const cx = ox + col * spacing
       const cy = oy + row * spacing
@@ -641,8 +640,8 @@ function buildSpots(vw: number, vh: number, palette: string[]): Rect[] {
         h: diameter,
         circle: true,
         color: colors[colorIdx],
-        delay: idx * 40,
-        fade: 150,
+        delay: idx * 70,
+        fade: 200,
       })
       idx++
     }
@@ -705,7 +704,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
     // Pick fresh random values each cycle
     const mode = forcedMode || pick(MODES)
     const color = pick(palette)
-    const forceBg = mode === 'spectrum' || mode === 'someone-great' || mode === 'spots'
+    const forceBg = mode === 'spectrum' || mode === 'someone-great' || (mode === 'spots' && Math.random() < 0.5)
     let bg = forceBg ? '#F9F7F4' : pick(backgrounds)
     while (bg === color && backgrounds.length > 1 && !forceBg) bg = pick(backgrounds)
 
