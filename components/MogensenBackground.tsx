@@ -703,7 +703,9 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
 
     // Pick fresh random values each cycle
     const mode = forcedMode || pick(MODES)
-    const color = pick(palette)
+    let color = pick(palette)
+    let colorTarget: string | null = null
+    let bgTarget: string | null = null
     const forceBg = mode === 'spectrum' || mode === 'someone-great' || (mode === 'spots' && Math.random() < 0.5)
     let bg = forceBg ? '#F9F7F4' : pick(backgrounds)
     while (bg === color && backgrounds.length > 1 && !forceBg) bg = pick(backgrounds)
@@ -789,6 +791,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
 
       function frame(now: number) {
         if (stopped) return
+        stepColorFade()
         ctx!.clearRect(0, 0, w, h)
         ctx!.fillStyle = bg
         ctx!.fillRect(0, 0, w, h)
@@ -817,6 +820,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
           function grainLoop(now: number) {
             if (stopped) return
             if (now - lastGrain >= GRAIN_INTERVAL) {
+              stepColorFade()
               drawAll(panels, w, h)
               lastGrain = now
             }
@@ -919,6 +923,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
           function grainLoop(now2: number) {
             if (stopped) return
             if (now2 - lastGrain >= GRAIN_INTERVAL) {
+              stepColorFade()
               drawTowersScene(vw, vh, 1, 1)
               lastGrain = now2
             }
@@ -944,18 +949,90 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       animate(currentPanels, w, h)
     }
 
-    // Beat-reactive: rotate panel colors on each beat
+    // Beat-reactive: fade panel colors toward target on each beat
+    const targetColors: (string | null)[] = currentPanels.map(() => null)
+    let FADE_SPEED = 0.08
+    let lastBeatTimes: number[] = []
+
+    function hexToRgb(hex: string) {
+      const n = parseInt(hex.slice(1), 16)
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+    }
+    function rgbToHex(r: number, g: number, b: number) {
+      return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
+    }
+    function lerpColor(from: string, to: string, t: number): string {
+      const [r1, g1, b1] = hexToRgb(from)
+      const [r2, g2, b2] = hexToRgb(to)
+      return rgbToHex(
+        Math.round(r1 + (r2 - r1) * t),
+        Math.round(g1 + (g2 - g1) * t),
+        Math.round(b1 + (b2 - b1) * t),
+      )
+    }
+
+    // Called each grain frame to interpolate colors
+    function stepColorFade() {
+      // Fade global color (for towers)
+      if (colorTarget) {
+        if (color === colorTarget) { colorTarget = null }
+        else { color = lerpColor(color, colorTarget, FADE_SPEED) }
+      }
+      // Fade background (slower than panels)
+      if (bgTarget) {
+        if (bg === bgTarget) { bgTarget = null }
+        else { bg = lerpColor(bg, bgTarget, FADE_SPEED * 0.5) }
+      }
+      // Fade per-panel colors
+      for (let i = 0; i < currentPanels.length; i++) {
+        const target = targetColors[i]
+        if (!target) continue
+        const current = currentPanels[i].color || color
+        if (current === target) { targetColors[i] = null; continue }
+        currentPanels[i].color = lerpColor(current, target, FADE_SPEED)
+      }
+    }
+
+    let beatCounter = 0
     function onBeat() {
-      if (mode === 'towers' || mode === 'quote') return
+      beatCounter++
       const colors = palette.slice(0, 10)
-      for (const p of currentPanels) {
-        if (!p.color) continue
-        const idx = colors.indexOf(p.color)
-        if (idx >= 0) {
-          p.color = colors[(idx + 1) % colors.length]
-        } else {
-          p.color = pick(colors)
+
+      // Adaptive fade speed: faster beats = faster color transitions
+      const now = performance.now()
+      lastBeatTimes.push(now)
+      if (lastBeatTimes.length > 8) lastBeatTimes.shift()
+      if (lastBeatTimes.length >= 2) {
+        const avgInterval = (lastBeatTimes[lastBeatTimes.length - 1] - lastBeatTimes[0]) / (lastBeatTimes.length - 1)
+        // Fast (200ms interval) → fade 0.25, Slow (800ms+) → fade 0.06
+        FADE_SPEED = Math.max(0.06, Math.min(0.25, 1 - avgInterval / 1000))
+      }
+
+      // Change panels every 2nd beat
+      if (beatCounter % 2 === 0) {
+        // Set target for global color (towers mode)
+        const idx = colors.indexOf(color)
+        colorTarget = idx >= 0 ? colors[(idx + 1) % colors.length] : colors[Math.floor(Math.random() * colors.length)]
+
+        // Set targets for per-panel colors
+        for (let i = 0; i < currentPanels.length; i++) {
+          const currentColor = currentPanels[i].color || color
+          const ci = colors.indexOf(currentColor)
+          if (ci >= 0) {
+            targetColors[i] = colors[(ci + 1) % colors.length]
+          } else {
+            targetColors[i] = colors[Math.floor(Math.random() * colors.length)]
+          }
         }
+      }
+
+      // Change background every 8th beat (skip modes with forced bg)
+      if (beatCounter % 8 === 0 && !forceBg) {
+        const bgColors = [...backgrounds]
+        const bgIdx = bgColors.indexOf(bg)
+        let newBg = bgColors[(bgIdx + 1) % bgColors.length]
+        if (newBg === color || newBg === colorTarget) newBg = bgColors[(bgIdx + 2) % bgColors.length]
+        bgTarget = newBg
       }
     }
     window.addEventListener('beat', onBeat)
@@ -977,6 +1054,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
           function grainLoop(now: number) {
             if (stopped) return
             if (now - lastGrain >= GRAIN_INTERVAL) {
+              stepColorFade()
               drawTowersScene(nw, nh, 1, 1)
               lastGrain = now
             }
@@ -985,12 +1063,14 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
           rafRef.current = requestAnimationFrame(grainLoop)
         } else {
           const np = buildPanels(mode, nw, nh, palette, bg)
+          currentPanels = np
           drawAll(np, nw, nh)
           let lastGrain = 0
           const GRAIN_INTERVAL = 1000 / 24
           function grainLoop(now: number) {
             if (stopped) return
             if (now - lastGrain >= GRAIN_INTERVAL) {
+              stepColorFade()
               drawAll(np, nw, nh)
               lastGrain = now
             }

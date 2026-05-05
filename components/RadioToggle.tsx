@@ -12,6 +12,10 @@ export default function RadioToggle() {
   const [volume, setVolume] = useState(0.6)
   const [color, setColor] = useState('#333')
   const intentionalPause = useRef(false)
+  const [beatCount, setBeatCount] = useState(0)
+  const [bassLevel, setBassLevel] = useState(0)
+  const [bpm, setBpm] = useState(0)
+  const bpmTimesRef = useRef<number[]>([])
 
   useEffect(() => {
     function read() {
@@ -35,7 +39,6 @@ export default function RadioToggle() {
         audioRef.current.onpause = null
         audioRef.current.pause()
         audioRef.current.src = ''
-        audioRef.current = null
       }
       setPlaying(false)
     }
@@ -51,6 +54,7 @@ export default function RadioToggle() {
   const analyserRef = useRef<AnalyserNode | null>(null)
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
   const beatRafRef = useRef(0)
+  const connectedAudioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
     if (!playing || !audioRef.current) {
@@ -59,44 +63,83 @@ export default function RadioToggle() {
     }
 
     const audio = audioRef.current
+
+    // Create AudioContext on first use
     if (!audioCtxRef.current) {
       audioCtxRef.current = new AudioContext()
+      analyserRef.current = audioCtxRef.current.createAnalyser()
+      analyserRef.current.fftSize = 256
+      analyserRef.current.connect(audioCtxRef.current.destination)
     }
     const ctx = audioCtxRef.current
 
-    if (!sourceRef.current) {
+    // Resume if suspended (happens after user gesture requirement)
+    if (ctx.state === 'suspended') ctx.resume()
+
+    // Only create a new source if the audio element changed
+    if (connectedAudioRef.current !== audio) {
       try {
+        if (sourceRef.current) sourceRef.current.disconnect()
         sourceRef.current = ctx.createMediaElementSource(audio)
-        analyserRef.current = ctx.createAnalyser()
-        analyserRef.current.fftSize = 256
-        sourceRef.current.connect(analyserRef.current)
-        analyserRef.current.connect(ctx.destination)
+        sourceRef.current.connect(analyserRef.current!)
+        connectedAudioRef.current = audio
       } catch {
         return
       }
     }
 
     const analyser = analyserRef.current!
+    analyser.fftSize = 2048
     const bufferLength = analyser.frequencyBinCount
-    const dataArray = new Uint8Array(bufferLength)
-    let rollingAvg = 0
+    const spectrum = new Uint8Array(bufferLength)
+    const prevSpectrum = new Float32Array(bufferLength)
+    const HISTORY_SIZE = 43
+    const THRESHOLD_MULT = 1.5
+    const MIN_INTERVAL = 250
+    const BASS_BINS = 10
+    const fluxHistory: number[] = new Array(HISTORY_SIZE).fill(0)
     let lastBeat = 0
 
+    let frameCount = 0
     function detect() {
       if (!playing) return
-      analyser.getByteFrequencyData(dataArray)
+      analyser.getByteFrequencyData(spectrum)
 
-      // Bass energy: average of first 8 bins (~0-150Hz)
-      let bass = 0
-      for (let i = 0; i < 8; i++) bass += dataArray[i]
-      bass /= 8
+      // Rectified spectral flux: sum of positive differences in bass range
+      let flux = 0
+      for (let i = 1; i <= BASS_BINS; i++) {
+        const diff = spectrum[i] - prevSpectrum[i]
+        if (diff > 0) flux += diff
+      }
+      prevSpectrum.set(spectrum)
 
-      rollingAvg = rollingAvg * 0.9 + bass * 0.1
+      // Adaptive threshold via median of recent flux
+      fluxHistory.push(flux)
+      fluxHistory.shift()
+      const sorted = [...fluxHistory].sort((a, b) => a - b)
+      const median = sorted[Math.floor(HISTORY_SIZE / 2)]
+      const threshold = median * THRESHOLD_MULT + 1
+
       const now = performance.now()
 
-      if (bass > rollingAvg * 1.4 && bass > 80 && now - lastBeat > 300) {
+      frameCount++
+      if (frameCount % 10 === 0) {
+        setBassLevel(Math.round(flux))
+      }
+
+      if (flux > threshold && now - lastBeat > MIN_INTERVAL) {
         lastBeat = now
+        setBeatCount(c => c + 1)
         window.dispatchEvent(new CustomEvent('beat'))
+
+        // Calculate BPM from recent beats
+        bpmTimesRef.current.push(now)
+        if (bpmTimesRef.current.length > 12) bpmTimesRef.current.shift()
+        if (bpmTimesRef.current.length >= 4) {
+          const times = bpmTimesRef.current
+          const avgInterval = (times[times.length - 1] - times[0]) / (times.length - 1)
+          setBpm(Math.round(60000 / avgInterval))
+        }
       }
 
       beatRafRef.current = requestAnimationFrame(detect)
@@ -157,21 +200,20 @@ export default function RadioToggle() {
 
   function toggle() {
     if (!audioRef.current) {
-      audioRef.current = new Audio(STREAM_URL)
-      audioRef.current.crossOrigin = 'anonymous'
-      audioRef.current.volume = volume
+      const audio = new Audio()
+      audio.crossOrigin = 'anonymous'
+      audio.volume = volume
+      audioRef.current = audio
     }
     if (playing) {
       intentionalPause.current = true
       audioRef.current.pause()
       audioRef.current.src = ''
-      audioRef.current = null
       setPlaying(false)
     } else {
       intentionalPause.current = false
       audioRef.current.src = STREAM_URL
       audioRef.current.play().catch(() => {})
-      // Auto-resume only if paused by an interruption (not user action)
       audioRef.current.onpause = () => {
         if (intentionalPause.current) return
         if (audioRef.current && !audioRef.current.ended) {
@@ -299,6 +341,25 @@ export default function RadioToggle() {
           }}
         />
       </div>
+
+      {/* DEBUG: Beat detection monitor (change false to true to enable) */}
+      {false && playing && (
+        <div style={{
+          position: 'fixed',
+          bottom: 70,
+          right: 24,
+          fontSize: 10,
+          fontFamily: 'Courier New, monospace',
+          color: '#333',
+          background: 'rgba(255,255,255,0.8)',
+          padding: '4px 8px',
+          zIndex: 999,
+        }}>
+          <div>flux: {bassLevel}</div>
+          <div>beats: {beatCount}</div>
+          <div>bpm: {bpm}</div>
+        </div>
+      )}
     </div>
   )
 }
