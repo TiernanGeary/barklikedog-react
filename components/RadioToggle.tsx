@@ -46,6 +46,66 @@ export default function RadioToggle() {
     }
   }, [])
 
+  // Beat detection via Web Audio API
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+  const beatRafRef = useRef(0)
+
+  useEffect(() => {
+    if (!playing || !audioRef.current) {
+      cancelAnimationFrame(beatRafRef.current)
+      return
+    }
+
+    const audio = audioRef.current
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext()
+    }
+    const ctx = audioCtxRef.current
+
+    if (!sourceRef.current) {
+      try {
+        sourceRef.current = ctx.createMediaElementSource(audio)
+        analyserRef.current = ctx.createAnalyser()
+        analyserRef.current.fftSize = 256
+        sourceRef.current.connect(analyserRef.current)
+        analyserRef.current.connect(ctx.destination)
+      } catch {
+        return
+      }
+    }
+
+    const analyser = analyserRef.current!
+    const bufferLength = analyser.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+    let rollingAvg = 0
+    let lastBeat = 0
+
+    function detect() {
+      if (!playing) return
+      analyser.getByteFrequencyData(dataArray)
+
+      // Bass energy: average of first 8 bins (~0-150Hz)
+      let bass = 0
+      for (let i = 0; i < 8; i++) bass += dataArray[i]
+      bass /= 8
+
+      rollingAvg = rollingAvg * 0.9 + bass * 0.1
+      const now = performance.now()
+
+      if (bass > rollingAvg * 1.4 && bass > 80 && now - lastBeat > 300) {
+        lastBeat = now
+        window.dispatchEvent(new CustomEvent('beat'))
+      }
+
+      beatRafRef.current = requestAnimationFrame(detect)
+    }
+    beatRafRef.current = requestAnimationFrame(detect)
+
+    return () => cancelAnimationFrame(beatRafRef.current)
+  }, [playing])
+
   function skipSong() {
     fetch('/api/radio/skip-song', { method: 'POST' }).catch(() => {})
     // Reconnect the stream after a short delay so the listener hears the new song

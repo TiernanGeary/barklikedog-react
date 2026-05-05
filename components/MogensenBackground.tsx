@@ -934,12 +934,31 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
     ctx.fillStyle = bg
     ctx.fillRect(0, 0, w, h)
 
+    // Track current panels for beat-reactive color shifts
+    let currentPanels: Rect[] = []
+
     if (mode === 'towers') {
       animateTowers(w, h)
     } else {
-      const panels = buildPanels(mode, w, h, palette, bg)
-      animate(panels, w, h)
+      currentPanels = buildPanels(mode, w, h, palette, bg)
+      animate(currentPanels, w, h)
     }
+
+    // Beat-reactive: rotate panel colors on each beat
+    function onBeat() {
+      if (mode === 'towers' || mode === 'quote') return
+      const colors = palette.slice(0, 10)
+      for (const p of currentPanels) {
+        if (!p.color) continue
+        const idx = colors.indexOf(p.color)
+        if (idx >= 0) {
+          p.color = colors[(idx + 1) % colors.length]
+        } else {
+          p.color = pick(colors)
+        }
+      }
+    }
+    window.addEventListener('beat', onBeat)
 
     // Resize: debounce 300ms, redraw final state
     let resizeTimer = 0
@@ -988,6 +1007,7 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
       cancelAnimationFrame(rafRef.current)
       clearTimeout(resizeTimer)
       window.removeEventListener('resize', onResize)
+      window.removeEventListener('beat', onBeat)
     }
   }, [palette, backgrounds, forcedMode, cycle])
 
