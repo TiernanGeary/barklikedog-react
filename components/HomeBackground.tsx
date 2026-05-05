@@ -87,8 +87,8 @@ export default function HomeBackground() {
             src={bgMode.src}
             autoPlay
             muted
-            loop
             playsInline
+            onEnded={() => setBgMode(pickMode())}
             style={{
               position: 'fixed',
               top: 0,
