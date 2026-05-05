@@ -14,9 +14,8 @@ const BG_VIDEOS = [
   '/bg-videos/SnapInsta.to_AQPcn5rtgV6cIyHa21mRW0NnoBTy1IskWpW5PFEBT35ZJZy0lRXgLKoisLfcdshGi6h9xDFsOnMI1DJie3KcJ-cFiJn-zJHfY7lT-Dc.mp4',
 ]
 
-// ~20% chance of video, 80% generative
 function pickMode(): { type: 'generative' } | { type: 'video'; src: string } {
-  if (Math.random() < 0.2) {
+  if (Math.random() < 0.05) {
     return { type: 'video', src: BG_VIDEOS[Math.floor(Math.random() * BG_VIDEOS.length)] }
   }
   return { type: 'generative' }
