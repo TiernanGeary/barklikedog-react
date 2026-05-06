@@ -1028,11 +1028,8 @@ export default function MogensenBackground({ palette = DEFAULT_PALETTE, backgrou
 
       // Change background every 8th beat (skip modes with forced bg)
       if (beatCounter % 8 === 0 && !forceBg) {
-        const bgColors = [...backgrounds]
-        const bgIdx = bgColors.indexOf(bg)
-        let newBg = bgColors[(bgIdx + 1) % bgColors.length]
-        if (newBg === color || newBg === colorTarget) newBg = bgColors[(bgIdx + 2) % bgColors.length]
-        bgTarget = newBg
+        const bgOptions = backgrounds.filter(c => c !== bgTarget && c !== colorTarget)
+        bgTarget = bgOptions[Math.floor(Math.random() * bgOptions.length)] || backgrounds[0]
       }
     }
     window.addEventListener('beat', onBeat)
