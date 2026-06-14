@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from 'react'
 import MogensenBackground from './MogensenBackground'
 import RadioToggle from './RadioToggle'
 
+// Temporarily disabled: hides the live radio audio toggle on the front end.
+// Set back to true (and re-enable the streaming server) to restore live music.
+const LIVE_MUSIC_ENABLED = false
+
 const BG_VIDEOS = [
   '/bg-videos/SnapInsta.to_AQM1N2CygC9yBqVLgB7rsUa_QbI2QgUOb1VZqOTRgHPlpaCsnPyd6VJFTmogDEQ82j7umXzFLhjeJQp3rsXJyKKF7KZZYkH3yF79DP8.mp4',
   '/bg-videos/SnapInsta.to_AQMd0AXBV93LRXTPLx_2FHuJbxdEN71T33S3pnIKf-TCnK6B621jE8RMtWvD4Pv5UOY4OtsXBqP3EfnY2h122xY_oPYr7glkx6OH0TA.mp4',
@@ -99,18 +103,20 @@ export default function HomeBackground() {
           />
         )}
       </div>
-      <div
-        style={{
-          opacity: visible ? 1 : 0,
-          transition: 'opacity 0.6s ease',
-          position: 'fixed',
-          bottom: 0,
-          right: 0,
-          zIndex: 10,
-        }}
-      >
-        <RadioToggle />
-      </div>
+      {LIVE_MUSIC_ENABLED && (
+        <div
+          style={{
+            opacity: visible ? 1 : 0,
+            transition: 'opacity 0.6s ease',
+            position: 'fixed',
+            bottom: 0,
+            right: 0,
+            zIndex: 10,
+          }}
+        >
+          <RadioToggle />
+        </div>
+      )}
     </>
   )
 }
