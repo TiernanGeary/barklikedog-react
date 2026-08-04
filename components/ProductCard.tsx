@@ -8,6 +8,7 @@ interface Props {
 
 export default function ProductCard({ product }: Props) {
   const image = product.images?.[0]?.asset?.url
+  const hoverImage = product.images?.[1]?.asset?.url
 
   return (
     <div className="product">
@@ -17,10 +18,19 @@ export default function ProductCard({ product }: Props) {
             <Image
               src={image}
               alt={product.images[0]?.alt || product.name}
-              width={500}
-              height={500}
-              style={{ width: '100%', height: 'auto' }}
+              width={600}
+              height={800}
+              className="product-img-primary"
             />
+            {hoverImage && (
+              <Image
+                src={hoverImage}
+                alt={product.images[1]?.alt || product.name}
+                width={600}
+                height={800}
+                className="product-img-hover"
+              />
+            )}
           </Link>
         </div>
       )}

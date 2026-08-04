@@ -34,7 +34,6 @@ function pickWeighted(excludeWhite = false): string {
 const NAV_ITEMS = [
   { title: 'Home', href: '/' },
   { title: 'Shop', href: '/shop' },
-  { title: 'Posts', href: '/posts' },
   { title: 'About', href: '/about' },
 ]
 
@@ -102,6 +101,8 @@ export default function Header({ comingSoon = false }: { comingSoon?: boolean })
   const pathname = usePathname()
   const [logoColor, setLogoColor] = useState(() => pickWeighted(pathname !== '/'))
   const { count } = useCart()
+
+  if (pathname.startsWith('/studio')) return null
 
   // Re-pick color without white when leaving home, to stay visible on white bg
   useEffect(() => {

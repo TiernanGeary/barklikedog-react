@@ -57,28 +57,35 @@ export default function ProductDetail({ product }: Props) {
       <div className="product">
         {/* Images */}
         <div className="product-images">
-          {currentImage && (
-            <Image
-              src={currentImage}
-              alt={images[selectedImage]?.alt || product.name}
-              width={800}
-              height={800}
-              style={{ width: '100%', height: 'auto' }}
-              priority
-            />
-          )}
+          <div className="product-image-main">
+            {currentImage && (
+              <Image
+                src={currentImage}
+                alt={images[selectedImage]?.alt || product.name}
+                width={600}
+                height={800}
+                style={{ width: '100%', height: 'auto' }}
+                priority
+              />
+            )}
+          </div>
           {images.length > 1 && (
-            <div className="product-gallery">
-              {images.slice(1).map((img, i) => (
-                <Image
+            <div className="product-thumbnails">
+              {images.map((img, i) => (
+                <button
                   key={i}
-                  src={img.asset?.url}
-                  alt={img.alt || product.name}
-                  width={800}
-                  height={800}
-                  style={{ width: '100%', height: 'auto', cursor: 'pointer' }}
-                  onClick={() => setSelectedImage(i + 1)}
-                />
+                  type="button"
+                  className={`product-thumbnail${selectedImage === i ? ' product-thumbnail--active' : ''}`}
+                  onClick={() => setSelectedImage(i)}
+                >
+                  <Image
+                    src={img.asset?.url}
+                    alt={img.alt || product.name}
+                    width={100}
+                    height={100}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </button>
               ))}
             </div>
           )}

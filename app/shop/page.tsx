@@ -18,9 +18,15 @@ export default async function ShopPage({ searchParams }: Props) {
     ? products.filter(p => p.categories?.some(c => c.slug.current === category))
     : products
 
+  const activeCategories = categories.filter(cat =>
+    products.some(p => p.categories?.some(c => c.slug.current === cat.slug.current))
+  )
+
   return (
     <div className="page-content">
-      <ShopFilterBar categories={categories} activeSlug={category} />
+      {activeCategories.length > 1 && (
+        <ShopFilterBar categories={activeCategories} activeSlug={category} />
+      )}
       <ProductGrid products={filtered} />
     </div>
   )
