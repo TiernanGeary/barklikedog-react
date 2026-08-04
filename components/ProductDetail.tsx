@@ -14,7 +14,9 @@ interface Props {
 
 export default function ProductDetail({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0)
-  const [selectedVariant, setSelectedVariant] = useState<string>('')
+  const [selectedVariant, setSelectedVariant] = useState<string>(
+    product.productType === 'variable' && product.variants?.length ? product.variants[0].option : ''
+  )
   const [added, setAdded] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const { addItem, count } = useCart()

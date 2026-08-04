@@ -623,7 +623,8 @@ body.bg-fading #footer {
   background: rgba(0, 89, 231, 0.08) !important;
 }
 
-.variant-btn--active {
+.variant-btn--active,
+.variant-btn--active:hover {
   background: #0059e7 !important;
   color: #fff !important;
 }
