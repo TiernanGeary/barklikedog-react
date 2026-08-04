@@ -159,9 +159,9 @@ export default function ProductDetail({ product }: Props) {
               <button
                 className="buy-button"
                 onClick={handleAddToCart}
-                disabled={product.productType === 'variable' && !selectedVariant}
+                disabled={product.soldOut || (product.productType === 'variable' && !selectedVariant)}
               >
-                {added ? 'Added ✓' : 'Add to Cart'}
+                {product.soldOut ? 'Sold Out' : added ? 'Added ✓' : 'Add to Cart'}
               </button>
               {showToast && (
                 <div className="cart-toast">

@@ -370,6 +370,7 @@ body.bg-fading #footer {
 }
 
 .product-image-wrapper {
+  position: relative;
   margin-bottom: 15px;
   aspect-ratio: 3 / 4;
   overflow: hidden;
@@ -408,6 +409,19 @@ body.bg-fading #footer {
 
 .product-image-wrapper:hover .product-img-hover {
   opacity: 1;
+}
+
+.product-badge-sold-out {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #000;
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  text-transform: uppercase;
 }
 
 .product-title {

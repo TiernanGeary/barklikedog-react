@@ -32,6 +32,7 @@ export default function ProductCard({ product }: Props) {
               />
             )}
           </Link>
+          {product.soldOut && <span className="product-badge-sold-out">Sold Out</span>}
         </div>
       )}
       <div className="product-title">

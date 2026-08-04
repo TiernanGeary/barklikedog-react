@@ -26,7 +26,7 @@ export function urlFor(source: SanityImage) {
 export async function getProducts(perPage = 25): Promise<Product[]> {
   return client.fetch(
     `*[_type == "product"] | order(_createdAt desc) [0...$perPage] {
-      _id, name, slug, price, salePrice, year, productType, shortDescription, stripePriceId,
+      _id, name, slug, price, salePrice, year, productType, shortDescription, stripePriceId, soldOut,
       images[] { _type, asset-> { _ref, url }, alt },
       categories[]-> { _id, name, slug },
       variants
@@ -38,7 +38,7 @@ export async function getProducts(perPage = 25): Promise<Product[]> {
 export async function getProduct(slug: string): Promise<Product | null> {
   return client.fetch(
     `*[_type == "product" && slug.current == $slug][0] {
-      _id, name, slug, price, salePrice, year, productType, shortDescription, description, stripePriceId,
+      _id, name, slug, price, salePrice, year, productType, shortDescription, description, stripePriceId, soldOut,
       images[] { _type, asset-> { _ref, url }, alt },
       categories[]-> { _id, name, slug },
       variants

@@ -58,6 +58,12 @@ export const product = defineType({
       type: 'string',
     }),
     defineField({
+      name: 'soldOut',
+      title: 'Sold Out',
+      type: 'boolean',
+      initialValue: false,
+    }),
+    defineField({
       name: 'stripePriceId',
       title: 'Stripe Price ID',
       type: 'string',

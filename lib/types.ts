@@ -27,6 +27,7 @@ export interface Product {
   shortDescription?: string
   description?: PortableTextBlock[]
   year?: string
+  soldOut?: boolean
   stripePriceId?: string
   productType: 'simple' | 'variable'
   variants?: Array<{
