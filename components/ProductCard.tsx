@@ -32,14 +32,15 @@ export default function ProductCard({ product }: Props) {
               />
             )}
           </Link>
-          {product.soldOut && <span className="product-badge-sold-out">Sold Out</span>}
         </div>
       )}
       <div className="product-title">
         <Link href={`/shop/${product.slug.current}`}>{product.name}</Link>
       </div>
       <div className="price">
-        {product.salePrice ? (
+        {product.soldOut ? (
+          <span className="price-sold-out">Sold Out</span>
+        ) : product.salePrice ? (
           <>
             <del>${product.price.toFixed(2)}</del>{' '}
             <ins>${product.salePrice.toFixed(2)}</ins>

@@ -15,7 +15,9 @@ interface Props {
 export default function ProductDetail({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState<string>(
-    product.productType === 'variable' && product.variants?.length ? product.variants[0].option : ''
+    product.productType === 'variable' && product.variants?.length
+      ? (product.variants.find(v => !v.soldOut)?.option ?? product.variants[0].option)
+      : ''
   )
   const [added, setAdded] = useState(false)
   const [showToast, setShowToast] = useState(false)
@@ -142,10 +144,11 @@ export default function ProductDetail({ product }: Props) {
                         <button
                           key={v.option}
                           type="button"
-                          className={`variant-btn${selectedVariant === v.option ? ' variant-btn--active' : ''}`}
-                          onClick={() => setSelectedVariant(v.option)}
+                          className={`variant-btn${selectedVariant === v.option ? ' variant-btn--active' : ''}${v.soldOut ? ' variant-btn--sold-out' : ''}`}
+                          onClick={() => !v.soldOut && setSelectedVariant(v.option)}
+                          disabled={v.soldOut}
                         >
-                          {v.option}
+                          {v.option}{v.soldOut ? ' ✕' : ''}
                         </button>
                       ))}
                   </div>
@@ -159,9 +162,9 @@ export default function ProductDetail({ product }: Props) {
               <button
                 className="buy-button"
                 onClick={handleAddToCart}
-                disabled={product.soldOut || (product.productType === 'variable' && !selectedVariant)}
+                disabled={product.soldOut || matchedVariant?.soldOut || (product.productType === 'variable' && !selectedVariant)}
               >
-                {product.soldOut ? 'Sold Out' : added ? 'Added ✓' : 'Add to Cart'}
+                {product.soldOut || matchedVariant?.soldOut ? 'Sold Out' : added ? 'Added ✓' : 'Add to Cart'}
               </button>
               {showToast && (
                 <div className="cart-toast">

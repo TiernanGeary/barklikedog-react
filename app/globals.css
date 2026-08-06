@@ -411,17 +411,8 @@ body.bg-fading #footer {
   opacity: 1;
 }
 
-.product-badge-sold-out {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: #000;
-  color: #fff;
-  font-size: 10px;
-  font-weight: bold;
-  letter-spacing: 0.05em;
-  padding: 4px 8px;
-  text-transform: uppercase;
+.price-sold-out {
+  opacity: 0.5;
 }
 
 .product-title {
@@ -641,6 +632,13 @@ body.bg-fading #footer {
 .variant-btn--active:hover {
   background: #0059e7 !important;
   color: #fff !important;
+}
+
+.variant-btn--sold-out,
+.variant-btn--sold-out:hover {
+  opacity: 0.4 !important;
+  cursor: not-allowed;
+  text-decoration: line-through;
 }
 
 .product-description {

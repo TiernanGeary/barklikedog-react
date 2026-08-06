@@ -35,6 +35,7 @@ export interface Product {
     option: string
     price: number
     stripePriceId?: string
+    soldOut?: boolean
   }>
 }
 
