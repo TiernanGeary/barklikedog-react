@@ -12,6 +12,13 @@ export const siteSettings = defineType({
       description: 'When enabled, visitors see the coming soon page instead of the site.',
       initialValue: true,
     }),
+    defineField({
+      name: 'freeShipping',
+      title: 'Free Shipping',
+      type: 'boolean',
+      description: 'When enabled, all orders ship free (no shipping charge at checkout).',
+      initialValue: false,
+    }),
   ],
   preview: {
     prepare() {

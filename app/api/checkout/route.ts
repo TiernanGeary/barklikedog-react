@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import { client } from '@/sanity/lib/client'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -21,12 +22,15 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get('origin') || 'http://localhost:3000'
     const stripe = getStripe()
 
+    const settings = await client.fetch(
+      `*[_type == "siteSettings" && _id == "siteSettings"][0] { freeShipping }`
+    )
+    const freeShipping = settings?.freeShipping ?? false
+
     const line_items = items.map((item: { priceId: string; quantity: number }) => ({
       price: item.priceId,
       quantity: item.quantity,
     }))
-
-    const shippingRate = region === 'us' ? SHIPPING_US : SHIPPING_INTL
 
     const allowedCountries: Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[] =
       region === 'us'
@@ -38,14 +42,20 @@ export async function POST(req: NextRequest) {
             'CO', 'IL', 'AE', 'SA', 'TH', 'MY', 'PH', 'IN', 'ZA',
           ]
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: 'payment',
       line_items,
       shipping_address_collection: { allowed_countries: allowedCountries },
-      shipping_options: [{ shipping_rate: shippingRate }],
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,
-    })
+    }
+
+    if (!freeShipping) {
+      const shippingRate = region === 'us' ? SHIPPING_US : SHIPPING_INTL
+      sessionParams.shipping_options = [{ shipping_rate: shippingRate }]
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams)
 
     return NextResponse.json({ url: session.url })
   } catch (err: unknown) {
