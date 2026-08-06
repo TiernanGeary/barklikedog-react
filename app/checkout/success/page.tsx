@@ -29,36 +29,34 @@ export default async function CheckoutSuccess({ searchParams }: Props) {
   }
 
   return (
-    <div className="page-content" style={{ paddingTop: '60px' }}>
-      <h1>Order Confirmed</h1>
-      <p style={{ marginTop: '12px' }}>Thank you for your purchase.</p>
+    <div className="page-content">
+      <h1 className="page-title">Order Confirmed</h1>
+      <p>Thank you for your purchase.</p>
 
       {lineItems.length > 0 && (
-        <div className="order-summary">
+        <div className="cart-items">
           {lineItems.map((item) => {
             const product = item.price?.product as Stripe.Product | undefined
             const image = product?.images?.[0]
             return (
-              <div key={item.id} className="order-item">
+              <div key={item.id} className="cart-item">
                 {image && (
-                  <div className="order-item-image">
+                  <div className="cart-item-image">
                     <Image
                       src={image}
                       alt={item.description || ''}
                       width={80}
                       height={80}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={{ width: 80, height: 80, objectFit: 'cover' }}
                     />
-                    {(item.quantity ?? 1) > 1 && (
-                      <span className="order-item-qty">{item.quantity}</span>
-                    )}
                   </div>
                 )}
-                <div className="order-item-details">
-                  <span className="order-item-name">{item.description}</span>
-                  <span className="order-item-price">
-                    ${((item.amount_total ?? 0) / 100).toFixed(2)}
-                  </span>
+                <div className="cart-item-info">
+                  <div className="cart-item-name">{item.description}</div>
+                  <div className="cart-item-price">Qty: {item.quantity}</div>
+                </div>
+                <div className="cart-item-total">
+                  ${((item.amount_total ?? 0) / 100).toFixed(2)}
                 </div>
               </div>
             )
@@ -66,8 +64,8 @@ export default async function CheckoutSuccess({ searchParams }: Props) {
         </div>
       )}
 
-      <Link href="/shop" style={{ display: 'inline-block', marginTop: '32px' }}>
-        ← Back to Shop
+      <Link href="/shop" className="back-link" style={{ marginTop: 24, display: 'inline-block' }}>
+        ← Continue Shopping
       </Link>
     </div>
   )
