@@ -25,7 +25,7 @@ export function urlFor(source: SanityImage) {
 
 export async function getProducts(perPage = 25): Promise<Product[]> {
   return client.fetch(
-    `*[_type == "product"] | order(coalesce(order, 999) asc, _createdAt desc) [0...$perPage] {
+    `*[_type == "product"] | order(orderRank asc) [0...$perPage] {
       _id, name, slug, price, salePrice, year, productType, shortDescription, stripePriceId, soldOut,
       images[] { _type, asset-> { _ref, url }, alt },
       categories[]-> { _id, name, slug },

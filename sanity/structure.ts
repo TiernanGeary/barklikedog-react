@@ -1,6 +1,7 @@
 import type {StructureResolver} from 'sanity/structure'
+import {orderableDocumentListDeskItem} from '@sanity/orderable-document-list'
 
-export const structure: StructureResolver = (S) =>
+export const structure: StructureResolver = (S, context) =>
   S.list()
     .title('Content')
     .items([
@@ -26,8 +27,10 @@ export const structure: StructureResolver = (S) =>
             .title('Radio Settings')
         ),
       S.divider(),
-      // All other document types except singletons
+      // Products with drag-to-reorder
+      orderableDocumentListDeskItem({type: 'product', title: 'Products', S, context}),
+      // All other document types except singletons and product
       ...S.documentTypeListItems().filter(
-        (item) => item.getId() !== 'siteSettings' && item.getId() !== 'radioSettings'
+        (item) => !['siteSettings', 'radioSettings', 'product'].includes(item.getId() ?? '')
       ),
     ])
