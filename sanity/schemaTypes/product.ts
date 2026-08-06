@@ -6,6 +6,12 @@ export const product = defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'order',
+      title: 'Order',
+      type: 'number',
+      initialValue: 0,
+    }),
+    defineField({
       name: 'name',
       title: 'Name',
       type: 'string',
