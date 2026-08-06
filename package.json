@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@sanity/image-url": "^1.2.0",
-    "@sanity/orderable-document-list": "^2.0.18",
     "@sanity/vision": "^4.22.0",
     "hls.js": "^1.6.15",
     "next": "16.1.6",
