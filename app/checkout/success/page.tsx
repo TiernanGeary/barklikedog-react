@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import Stripe from 'stripe'
+import ClearCart from '@/components/ClearCart'
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -30,6 +31,7 @@ export default async function CheckoutSuccess({ searchParams }: Props) {
 
   return (
     <div className="page-content">
+      <ClearCart />
       <h1 className="page-title">Order Confirmed</h1>
       <p>Thank you for your purchase.</p>
 
