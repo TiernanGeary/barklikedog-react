@@ -1,15 +1,11 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useState } from 'react'
 
-export default function Footer() {
-  const pathname = usePathname()
+export default function Footer({ hidden = false }: { hidden?: boolean }) {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
-
-  if (pathname === '/' || pathname.startsWith('/studio')) return null
 
   async function handleSubscribe(e: React.FormEvent) {
     e.preventDefault()
@@ -32,7 +28,7 @@ export default function Footer() {
   }
 
   return (
-    <footer id="footer">
+    <footer id="footer" hidden={hidden}>
       <div className="footer-main">
         <div className="footer-col footer-col-newsletter">
           <h4>Newsletter</h4>

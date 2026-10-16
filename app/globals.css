@@ -90,6 +90,20 @@ body {
   flex-direction: column;
 }
 
+.site-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: 100svh;
+}
+
+#site-header[hidden],
+#site-nav[hidden],
+#footer[hidden] {
+  display: none;
+}
+
 #site-header {
   padding: 9.3svh 24px 0;
   display: flex;

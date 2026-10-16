@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import Header from '@/components/Header'
 import { CartProvider } from '@/components/CartProvider'
-import Footer from '@/components/Footer'
-import PageTransition from '@/components/PageTransition'
+import SiteLayout from '@/components/SiteLayout'
 import { SanityLive } from '@/sanity/lib/live'
 import { isComingSoon } from '@/lib/sanity'
 
@@ -19,14 +17,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         <CartProvider>
-        <Header comingSoon={comingSoon} />
-        <PageTransition>
-          <main id="main-content">
-            {children}
-          </main>
-        </PageTransition>
-        {!comingSoon && <Footer />}
-        <SanityLive />
+          <SiteLayout comingSoon={comingSoon}>{children}</SiteLayout>
+          <SanityLive />
         </CartProvider>
       </body>
     </html>
