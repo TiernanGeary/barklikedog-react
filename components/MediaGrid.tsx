@@ -19,10 +19,10 @@ export default function MediaGrid({ items }: Props) {
             key={item._id}
             className={`media-item${item.featured ? ' media-item-featured' : ''}`}
           >
-            <Link href={`/media/${item.slug.current}`}>
+            <Link draggable={false} href={`/media/${item.slug.current}`}>
               <div className="media-image-wrapper">
                 {img ? (
-                  <Image
+                  <Image draggable={false}
                     src={img}
                     alt={item.featuredImage?.alt || item.title}
                     width={400}

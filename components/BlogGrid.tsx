@@ -34,10 +34,10 @@ function FeaturedPost({ post }: { post: Post }) {
 
   return (
     <article className="post-item post-item--featured">
-      <Link href={`/posts/${post.slug.current}`} className="post-item-link">
+      <Link draggable={false} href={`/posts/${post.slug.current}`} className="post-item-link">
         {img && (
           <div className="post-item-image">
-            <Image
+            <Image draggable={false}
               src={img}
               alt={post.featuredImage?.alt || post.title}
               width={800}
@@ -69,10 +69,10 @@ function RegularPost({ post }: { post: Post }) {
 
   return (
     <article className="post-item">
-      <Link href={`/posts/${post.slug.current}`} className="post-item-link">
+      <Link draggable={false} href={`/posts/${post.slug.current}`} className="post-item-link">
         {img && (
           <div className="post-item-image">
-            <Image
+            <Image draggable={false}
               src={img}
               alt={post.featuredImage?.alt || post.title}
               width={400}

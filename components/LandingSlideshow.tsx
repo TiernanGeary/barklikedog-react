@@ -39,6 +39,7 @@ export default function LandingSlideshow() {
 
   return (
     <Link
+      draggable={false}
       ref={slideshowRef}
       href="/shop"
       className="landing-slideshow"
@@ -49,7 +50,7 @@ export default function LandingSlideshow() {
       onBlur={() => setPaused(false)}
     >
       {PHOTOS.map((photo, index) => (
-        <img
+        <img draggable={false}
           key={photo}
           src={`/landing/${photo}-1200.webp`}
           srcSet={`/landing/${photo}-640.webp 640w, /landing/${photo}-1200.webp 1200w`}

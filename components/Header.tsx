@@ -26,11 +26,12 @@ export default function Header({ comingSoon = false }: { comingSoon?: boolean })
     <>
       <header id="site-header">
         <Link
+          draggable={false}
           href={isHome ? '/shop' : '/'}
           className="header-logo"
           aria-label={isHome ? 'rlyrlynice — enter shop' : 'rlyrlynice home'}
         >
-          <img src="/rlyrlynicelogo.svg" alt="rlyrlynice" width={1932} height={437} />
+          <img draggable={false} src="/rlyrlynicelogo.svg" alt="rlyrlynice" width={1932} height={437} />
         </Link>
       </header>
       {!isHome && !comingSoon && (

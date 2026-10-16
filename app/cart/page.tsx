@@ -58,7 +58,7 @@ export default function CartPage() {
               <div key={item.priceId} className="cart-item">
                 {item.image && (
                   <div className="cart-item-image">
-                    <Image src={item.image} alt={item.name} width={80} height={80} style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                    <Image draggable={false} src={item.image} alt={item.name} width={80} height={80} style={{ width: 80, height: 80, objectFit: 'cover' }} />
                   </div>
                 )}
                 <div className="cart-item-info">

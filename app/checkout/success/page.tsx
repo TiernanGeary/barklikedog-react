@@ -44,7 +44,7 @@ export default async function CheckoutSuccess({ searchParams }: Props) {
               <div key={item.id} className="cart-item">
                 {image && (
                   <div className="cart-item-image">
-                    <Image
+                    <Image draggable={false}
                       src={image}
                       alt={item.description || ''}
                       width={80}

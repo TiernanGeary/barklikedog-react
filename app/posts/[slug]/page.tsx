@@ -42,7 +42,7 @@ export default async function PostPage({ params }: Props) {
 
         {img && (
           <div className="single-post-image">
-            <Image
+            <Image draggable={false}
               src={img}
               alt={post.featuredImage?.alt || post.title}
               width={1200}

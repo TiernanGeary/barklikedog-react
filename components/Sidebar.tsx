@@ -36,8 +36,8 @@ export default function Sidebar() {
   return (
     <aside id="sidebar">
       <div className="logo-container">
-        <Link href="/">
-          <Image
+        <Link draggable={false} href="/">
+          <Image draggable={false}
             src="/houndstooth.png"
             alt="Bark Like Dog"
             width={50}

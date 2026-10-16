@@ -14,8 +14,8 @@ export default function ProductCard({ product }: Props) {
     <div className="product">
       {image && (
         <div className="product-image-wrapper">
-          <Link href={`/shop/${product.slug.current}`}>
-            <Image
+          <Link draggable={false} href={`/shop/${product.slug.current}`}>
+            <Image draggable={false}
               src={image}
               alt={product.images[0]?.alt || product.name}
               width={600}
@@ -23,7 +23,7 @@ export default function ProductCard({ product }: Props) {
               className="product-img-primary"
             />
             {hoverImage && (
-              <Image
+              <Image draggable={false}
                 src={hoverImage}
                 alt={product.images[1]?.alt || product.name}
                 width={600}

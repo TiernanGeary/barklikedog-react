@@ -63,7 +63,7 @@ export default function ProductDetail({ product }: Props) {
         <div className="product-images">
           <div className="product-image-main">
             {currentImage && (
-              <Image
+              <Image draggable={false}
                 src={currentImage}
                 alt={images[selectedImage]?.alt || product.name}
                 width={600}
@@ -82,7 +82,7 @@ export default function ProductDetail({ product }: Props) {
                   className={`product-thumbnail${selectedImage === i ? ' product-thumbnail--active' : ''}`}
                   onClick={() => setSelectedImage(i)}
                 >
-                  <Image
+                  <Image draggable={false}
                     src={img.asset?.url}
                     alt={img.alt || product.name}
                     width={100}
