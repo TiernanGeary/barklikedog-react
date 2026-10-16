@@ -1,16 +1,10 @@
-import { getPage } from '@/lib/sanity'
-import { PortableText } from 'next-sanity'
+import LandingSlideshow from '@/components/LandingSlideshow'
 
-export default async function HomePage() {
-  const page = await getPage('home').catch(() => null)
-
+export default function HomePage() {
   return (
-    <div className="page-content">
-      {page?.body && (
-        <div className="entry-content">
-          <PortableText value={page.body} />
-        </div>
-      )}
+    <div className="landing-page">
+      <h1 className="visually-hidden">rlyrlynice</h1>
+      <LandingSlideshow />
     </div>
   )
 }

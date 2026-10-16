@@ -3,14 +3,13 @@ import './globals.css'
 import Header from '@/components/Header'
 import { CartProvider } from '@/components/CartProvider'
 import Footer from '@/components/Footer'
-import HomeBackground from '@/components/HomeBackground'
 import PageTransition from '@/components/PageTransition'
 import { SanityLive } from '@/sanity/lib/live'
 import { isComingSoon } from '@/lib/sanity'
 
 export const metadata: Metadata = {
-  title: 'Bark Like Dog',
-  description: 'Art and collectibles.',
+  title: 'rlyrlynice',
+  description: 'A creative product design studio by Tiernan Geary.',
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -20,12 +19,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         <CartProvider>
-        <HomeBackground />
         <Header comingSoon={comingSoon} />
         <PageTransition>
-          <div id="main-content">
+          <main id="main-content">
             {children}
-          </div>
+          </main>
         </PageTransition>
         {!comingSoon && <Footer />}
         <SanityLive />

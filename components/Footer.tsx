@@ -88,7 +88,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <span>&copy; {new Date().getFullYear()} Bark Like Dog</span>
+        <span>&copy; {new Date().getFullYear()} rlyrlynice</span>
       </div>
     </footer>
   )
