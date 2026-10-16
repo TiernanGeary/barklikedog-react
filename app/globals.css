@@ -129,8 +129,14 @@ button:focus-visible {
 
 .landing-page {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   padding: 11.6svh 0 15svh;
+}
+
+.landing-shop-link {
+  margin-top: 14px;
+  font: inherit;
 }
 
 #main.main-home #main-content {
