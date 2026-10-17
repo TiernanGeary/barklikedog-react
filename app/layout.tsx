@@ -18,7 +18,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <CartProvider>
           <SiteLayout comingSoon={comingSoon}>{children}</SiteLayout>
-          <SanityLive />
+          <SanityLive refreshOnFocus={false} refreshOnReconnect={false} />
         </CartProvider>
       </body>
     </html>
