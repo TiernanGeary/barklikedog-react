@@ -7,7 +7,8 @@
   to   { opacity: 1; }
 }
 
-#main {
+#main:not(.main-home),
+.landing-page {
   animation: pageIn 0.3s ease both;
 }
 
@@ -184,7 +185,8 @@ button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #main {
+  #main:not(.main-home),
+  .landing-page {
     animation: none;
   }
 
