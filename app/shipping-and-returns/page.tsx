@@ -1,8 +1,10 @@
+import Link from 'next/link'
+
 export default function ShippingAndReturnsPage() {
   return (
     <div className="page-content">
       <h1>Shipping &amp; Returns Policy</h1>
-      <p>Last updated: October 16, 2026</p>
+      <p>Last updated: October 17, 2026</p>
 
       <h2>Shipping Policy</h2>
 
@@ -52,21 +54,9 @@ export default function ShippingAndReturnsPage() {
       <h2>Returns Policy</h2>
 
       <p>
-        We don’t usually accept returns or exchanges for a change of mind.
-        This does not affect your statutory rights.
-      </p>
-
-      <h3>Problems with Your Order</h3>
-      <p>
-        If there’s a mistake with your order or your product arrives damaged or
-        faulty, please contact us at{' '}
-        <a href="mailto:hello@barklikedog.com">hello@barklikedog.com</a> with your
-        order number, a description of the issue, and photos where helpful.
-      </p>
-      <p>
-        We’ll review your concerns and work with you on a fair solution, which
-        may include a replacement or refund depending on the issue. Please get
-        in touch before sending anything back so we can agree on the next steps.
+        Please see our{' '}
+        <Link href="/terms-and-conditions#returns-policy">Terms and Conditions</Link>{' '}
+        for our returns policy and information on resolving issues with your order.
       </p>
 
       <h2>Contact Us</h2>

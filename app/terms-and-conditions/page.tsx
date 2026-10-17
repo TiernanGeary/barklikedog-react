@@ -2,7 +2,7 @@ export default function TermsAndConditionsPage() {
   return (
     <div className="page-content">
       <h1>Terms and Conditions</h1>
-      <p>Last updated: August 4, 2026</p>
+      <p>Last updated: October 17, 2026</p>
 
       <h2>Overview</h2>
       <p>
@@ -73,8 +73,15 @@ export default function TermsAndConditionsPage() {
       <h2>Section 5 &mdash; Products and Services</h2>
       <p>
         Certain products or services may be available exclusively online through the website.
-        These products or services may have limited quantities and are subject to return or
-        exchange only according to our Returns Policy.
+        These products or services may have limited quantities.
+      </p>
+      <p id="returns-policy">
+        We do not accept returns. If there is an issue with your order, please
+        contact us at{' '}
+        <a href="mailto:hello@barklikedog.com">hello@barklikedog.com</a> with your
+        order number and details of the issue. We will review your concerns and
+        work with you to find an appropriate resolution. This does not affect
+        your statutory rights.
       </p>
       <p>
         We have made every effort to display as accurately as possible the colors and images
