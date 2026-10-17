@@ -20,7 +20,7 @@ export default function ProductDetail({ product }: Props) {
       : ''
   )
   const [added, setAdded] = useState(false)
-  const [showToast, setShowToast] = useState(false)
+  const [lastAddedName, setLastAddedName] = useState<string | null>(null)
   const { addItem, count } = useCart()
   const router = useRouter()
 
@@ -40,17 +40,18 @@ export default function ProductDetail({ product }: Props) {
 
   const handleAddToCart = useCallback(() => {
     if (!priceId || product.soldOut || matchedVariant?.soldOut) return
+    const itemName = product.name + (matchedVariant ? ` — ${matchedVariant.option}` : '')
     addItem({
       productId: product._id,
       variantId: matchedVariant?._key,
       priceId,
-      name: product.name + (matchedVariant ? ` — ${matchedVariant.option}` : ''),
+      name: itemName,
       price: displayPrice,
       image: images[0]?.asset?.url,
       variant: matchedVariant?.option,
     })
     setAdded(true)
-    setShowToast(true)
+    setLastAddedName(itemName)
     setTimeout(() => setAdded(false), 1200)
   }, [priceId, addItem, product._id, product.name, product.soldOut, matchedVariant, displayPrice, images])
 
@@ -173,10 +174,10 @@ export default function ProductDetail({ product }: Props) {
               >
                 {product.soldOut || matchedVariant?.soldOut ? 'Sold Out' : added ? 'Added ✓' : 'Add to Cart'}
               </button>
-              {showToast && (
+              {lastAddedName !== null && (
                 <div className="cart-toast">
                   <span className="cart-toast-text">
-                    {product.name}{matchedVariant ? ` — ${matchedVariant.option}` : ''} added
+                    {lastAddedName} added
                   </span>
                   <button className="cart-toast-link" onClick={() => router.push('/cart')}>
                     View Cart ({count})  →
