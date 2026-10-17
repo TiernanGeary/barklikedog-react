@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
 const PHOTOS = ['hoodie2', 'knitsweat', 'magg', 'watamelon-2']
-const SLIDE_DURATION = 5000
+const SLIDE_DURATION = 2800
 
 export default function LandingSlideshow() {
   const [active, setActive] = useState(0)
