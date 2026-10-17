@@ -2,7 +2,7 @@ export default function ShippingAndReturnsPage() {
   return (
     <div className="page-content">
       <h1>Shipping &amp; Returns Policy</h1>
-      <p>Last updated: August 4, 2026</p>
+      <p>Last updated: October 16, 2026</p>
 
       <h2>Shipping Policy</h2>
 
@@ -51,61 +51,22 @@ export default function ShippingAndReturnsPage() {
 
       <h2>Returns Policy</h2>
 
-      <h3>Return Eligibility</h3>
       <p>
-        We accept returns within 14 days of delivery. To be eligible for a
-        return, items must be:
-      </p>
-      <ul>
-        <li>Unused and in the same condition that you received them</li>
-        <li>In the original packaging</li>
-        <li>Accompanied by the receipt or proof of purchase</li>
-      </ul>
-
-      <h3>Non-Returnable Items</h3>
-      <p>The following items cannot be returned:</p>
-      <ul>
-        <li>Gift cards</li>
-        <li>Items that have been worn, washed, or altered</li>
-        <li>Items marked as final sale</li>
-      </ul>
-
-      <h3>How to Initiate a Return</h3>
-      <p>
-        To initiate a return, please contact us at{" "}
-        <a href="mailto:hello@barklikedog.com">hello@barklikedog.com</a> with
-        your order number and reason for the return. We will provide you with
-        return shipping instructions and a return authorization.
-      </p>
-      <p>
-        Return shipping costs are the responsibility of the customer unless the
-        return is due to a defective or incorrect item.
+        We don’t usually accept returns or exchanges for a change of mind.
+        This does not affect your statutory rights.
       </p>
 
-      <h3>Refunds</h3>
+      <h3>Problems with Your Order</h3>
       <p>
-        Once we receive your returned item, we will inspect it and notify you of
-        the status of your refund. If your return is approved, your refund will
-        be processed within 5-7 business days and a credit will be applied to
-        your original method of payment. Please note that it may take additional
-        time for the refund to appear on your statement depending on your
-        financial institution.
+        If there’s a mistake with your order or your product arrives damaged or
+        faulty, please contact us at{' '}
+        <a href="mailto:hello@barklikedog.com">hello@barklikedog.com</a> with your
+        order number, a description of the issue, and photos where helpful.
       </p>
-
-      <h3>Exchanges</h3>
       <p>
-        If you need to exchange an item for a different size or color, please
-        contact us at{" "}
-        <a href="mailto:hello@barklikedog.com">hello@barklikedog.com</a>.
-        Exchanges are subject to availability.
-      </p>
-
-      <h3>Damaged or Defective Items</h3>
-      <p>
-        If you receive a damaged or defective item, please contact us immediately
-        at <a href="mailto:hello@barklikedog.com">hello@barklikedog.com</a> with
-        photos of the damage. We will arrange for a replacement or full refund at
-        no additional cost to you.
+        We’ll review your concerns and work with you on a fair solution, which
+        may include a replacement or refund depending on the issue. Please get
+        in touch before sending anything back so we can agree on the next steps.
       </p>
 
       <h2>Contact Us</h2>
