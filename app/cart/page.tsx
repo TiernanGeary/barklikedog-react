@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/components/CartProvider'
+import { cartItemKey } from '@/lib/cart'
 
 const SHIPPING_COST = { us: 8, intl: 20 }
 
@@ -55,7 +56,7 @@ export default function CartPage() {
         <>
           <div className="cart-items">
             {items.map(item => (
-              <div key={item.priceId} className="cart-item">
+              <div key={cartItemKey(item)} className="cart-item">
                 {item.image && (
                   <div className="cart-item-image">
                     <Image draggable={false} src={item.image} alt={item.name} width={80} height={80} style={{ width: 80, height: 80, objectFit: 'cover' }} />
@@ -66,14 +67,14 @@ export default function CartPage() {
                   <div className="cart-item-price">${item.price.toFixed(2)}</div>
                 </div>
                 <div className="cart-item-qty">
-                  <button onClick={() => updateQuantity(item.priceId, item.quantity - 1)}>−</button>
+                  <button onClick={() => updateQuantity(cartItemKey(item), item.quantity - 1)}>−</button>
                   <span>{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.priceId, item.quantity + 1)}>+</button>
+                  <button onClick={() => updateQuantity(cartItemKey(item), item.quantity + 1)}>+</button>
                 </div>
                 <div className="cart-item-total">
                   ${(item.price * item.quantity).toFixed(2)}
                 </div>
-                <button className="cart-item-remove" onClick={() => removeItem(item.priceId)}>✕</button>
+                <button className="cart-item-remove" onClick={() => removeItem(cartItemKey(item))}>✕</button>
               </div>
             ))}
           </div>

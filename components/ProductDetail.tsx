@@ -16,7 +16,7 @@ export default function ProductDetail({ product }: Props) {
   const [selectedImage, setSelectedImage] = useState(0)
   const [selectedVariant, setSelectedVariant] = useState<string>(
     product.productType === 'variable' && product.variants?.length
-      ? (product.variants.find(v => !v.soldOut)?.option ?? product.variants[0].option)
+      ? (product.variants.find(v => !v.soldOut)?._key ?? product.variants[0]._key)
       : ''
   )
   const [added, setAdded] = useState(false)
@@ -26,7 +26,7 @@ export default function ProductDetail({ product }: Props) {
 
   const matchedVariant = useMemo(() => {
     if (!selectedVariant || !product.variants) return null
-    return product.variants.find(v => v.option === selectedVariant) ?? null
+    return product.variants.find(v => v._key === selectedVariant) ?? null
   }, [selectedVariant, product.variants])
 
   const displayPrice = matchedVariant?.price ?? product.salePrice ?? product.price
@@ -34,11 +34,15 @@ export default function ProductDetail({ product }: Props) {
   const images = product.images || []
   const currentImage = images[selectedImage]?.asset?.url
 
-  const priceId = matchedVariant?.stripePriceId ?? product.stripePriceId
+  const priceId = product.productType === 'variable'
+    ? matchedVariant?.stripePriceId
+    : product.stripePriceId
 
   const handleAddToCart = useCallback(() => {
-    if (!priceId) return
+    if (!priceId || product.soldOut || matchedVariant?.soldOut) return
     addItem({
+      productId: product._id,
+      variantId: matchedVariant?._key,
       priceId,
       name: product.name + (matchedVariant ? ` — ${matchedVariant.option}` : ''),
       price: displayPrice,
@@ -48,7 +52,7 @@ export default function ProductDetail({ product }: Props) {
     setAdded(true)
     setShowToast(true)
     setTimeout(() => setAdded(false), 1200)
-  }, [priceId, addItem, product.name, matchedVariant, displayPrice, images])
+  }, [priceId, addItem, product._id, product.name, product.soldOut, matchedVariant, displayPrice, images])
 
   const variantNames = useMemo(() => {
     if (!product.variants?.length) return []
@@ -142,10 +146,10 @@ export default function ProductDetail({ product }: Props) {
                       .filter(v => v.name === name)
                       .map(v => (
                         <button
-                          key={v.option}
+                          key={v._key}
                           type="button"
-                          className={`variant-btn${selectedVariant === v.option ? ' variant-btn--active' : ''}${v.soldOut ? ' variant-btn--sold-out' : ''}`}
-                          onClick={() => !v.soldOut && setSelectedVariant(v.option)}
+                          className={`variant-btn${selectedVariant === v._key ? ' variant-btn--active' : ''}${v.soldOut ? ' variant-btn--sold-out' : ''}`}
+                          onClick={() => !v.soldOut && setSelectedVariant(v._key)}
                           disabled={v.soldOut}
                         >
                           {v.option}{v.soldOut ? ' ✕' : ''}
@@ -157,6 +161,9 @@ export default function ProductDetail({ product }: Props) {
             </div>
           )}
 
+          {!priceId && product.productType === 'variable' && (
+            <p>This option is currently unavailable.</p>
+          )}
           {priceId && (
             <div style={{ position: 'relative' }}>
               <button

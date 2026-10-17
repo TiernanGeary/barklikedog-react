@@ -31,6 +31,7 @@ export interface Product {
   stripePriceId?: string
   productType: 'simple' | 'variable'
   variants?: Array<{
+    _key: string
     name: string
     option: string
     price: number

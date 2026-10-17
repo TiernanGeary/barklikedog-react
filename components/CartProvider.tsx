@@ -2,20 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 
-export interface CartItem {
-  priceId: string
-  name: string
-  price: number
-  image?: string
-  variant?: string
-  quantity: number
-}
+import { addCartItem, removeCartItem, setCartItemQuantity, type CartItem } from '@/lib/cart'
 
 interface CartContextType {
   items: CartItem[]
   addItem: (item: Omit<CartItem, 'quantity'>) => void
-  removeItem: (priceId: string) => void
-  updateQuantity: (priceId: string, quantity: number) => void
+  removeItem: (key: string) => void
+  updateQuantity: (key: string, quantity: number) => void
   clearCart: () => void
   total: number
   count: number
@@ -51,25 +44,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, loaded])
 
   const addItem = useCallback((item: Omit<CartItem, 'quantity'>) => {
-    setItems(prev => {
-      const existing = prev.find(i => i.priceId === item.priceId)
-      if (existing) {
-        return prev.map(i => i.priceId === item.priceId ? { ...i, quantity: i.quantity + 1 } : i)
-      }
-      return [...prev, { ...item, quantity: 1 }]
-    })
+    setItems(prev => addCartItem(prev, item))
   }, [])
 
-  const removeItem = useCallback((priceId: string) => {
-    setItems(prev => prev.filter(i => i.priceId !== priceId))
+  const removeItem = useCallback((key: string) => {
+    setItems(prev => removeCartItem(prev, key))
   }, [])
 
-  const updateQuantity = useCallback((priceId: string, quantity: number) => {
-    if (quantity <= 0) {
-      setItems(prev => prev.filter(i => i.priceId !== priceId))
-    } else {
-      setItems(prev => prev.map(i => i.priceId === priceId ? { ...i, quantity } : i))
-    }
+  const updateQuantity = useCallback((key: string, quantity: number) => {
+    setItems(prev => setCartItemQuantity(prev, key, quantity))
   }, [])
 
   const clearCart = useCallback(() => setItems([]), [])
